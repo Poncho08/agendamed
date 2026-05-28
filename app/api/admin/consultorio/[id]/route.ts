@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { createClient, createServiceClient } from "@/lib/supabase/server"
 import { z } from "zod"
 
-const ADMIN_EMAILS = ["admin@agendamed.mx"]
+const ADMIN_EMAILS = ["silvaalfonso381@gmail.com", "admin@agendamed.mx"]
 
 const schema = z.object({
   plan: z.enum(["prueba", "base", "pro"]).optional(),

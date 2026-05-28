@@ -3,7 +3,7 @@ import { redirect } from "next/navigation"
 import Link from "next/link"
 import { AdminConsultorioForm } from "./form"
 
-const ADMIN_EMAILS = ["admin@agendamed.mx"]
+const ADMIN_EMAILS = ["silvaalfonso381@gmail.com", "admin@agendamed.mx"]
 
 export default async function AdminConsultorioPage({
   params,
