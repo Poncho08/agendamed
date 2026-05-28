@@ -651,7 +651,8 @@ img, svg { display: block; max-width: 100%; }
   margin-top: 1px;
   transition: background var(--t-fast), border-color var(--t-fast);
 }
-.checkbox.checked .checkbox__box { background: var(--c-brand); border-color: var(--c-brand); }
+.checkbox.checked .checkbox__box,
+.checkbox__box.checked { background: var(--c-brand); border-color: var(--c-brand); }
 .checkbox__label { font-size: var(--fs-sm); color: var(--c-text); }
 
 /* ============================================================
