@@ -1,0 +1,170 @@
+/* ============================================================
+   AgendaMed — Print stylesheet
+   Renders all 24 screens stacked, each on its own landscape page.
+   ============================================================ */
+
+@page { size: A3 landscape; margin: 12mm; }
+
+html, body { background: white; }
+
+body {
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
+/* Override sticky positioning so things flow normally in print */
+.sidebar,
+.topbar,
+.set-nav,
+.newappt__summary,
+.rx-preview-wrap,
+.onb-aside,
+.onb-head {
+  position: static !important;
+}
+
+/* Hide interactive chrome that doesn't help in PDF */
+.floating-review,
+.tweaks-toggle,
+.tweaks-panel,
+[data-tweaks-panel],
+.iconbtn__dot,
+.topbar__review,
+.topbar__search,
+.topbar__date,
+.topbar__center,
+.topbar__right .iconbtn,
+.sidebar__collapse {
+  display: none !important;
+}
+
+.topbar { grid-template-columns: 1fr !important; }
+
+/* Force light scheme regardless of preference */
+:root { color-scheme: light; }
+
+/* Print page = one viewport of design content */
+.print-page {
+  width: 100%;
+  background: white;
+  page-break-after: always;
+  break-after: page;
+  position: relative;
+  padding: 18px 0 24px;
+}
+.print-page:last-child { page-break-after: auto; break-after: auto; }
+
+.print-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--c-text-faint);
+  margin-bottom: 14px;
+  padding: 0 4px 8px;
+  border-bottom: 1px solid var(--c-border);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.print-label::after {
+  content: "AgendaMed · v1.0";
+  color: var(--c-text-faint);
+  font-weight: 500;
+}
+
+.print-frame {
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  min-height: 720px;
+}
+
+/* For in-app frames, give the sidebar a fixed visible width and don't collapse */
+.print-frame .sidebar {
+  height: auto !important;
+  min-height: 720px;
+}
+.print-frame .main { min-width: 0; }
+.print-frame .page { padding: 24px 28px 36px; min-height: 660px; }
+
+/* Onboarding & public flows live without the .app shell — give them a normal min-height */
+.print-frame.public-shell { min-height: 720px; }
+
+/* Avoid clipping content inside scrollable previews */
+.rx-preview { max-height: none !important; overflow: visible !important; }
+.modal-root { display: none !important; }
+.toast-stack { display: none !important; }
+
+/* Avoid awkward break inside cards */
+.card, .metric, .plan, .pat-row, .appt-row, .month__cell,
+.appt-next, .pay-step, .agenda-event, .agenda-week__event,
+.book-svc, .book-slot, .auth-card, .stub, .empty-sample,
+.hist__row, .hist-list__row, .rx-row, .svc-list__row,
+.mini-cal, .pay-bank, .pay-channel {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.appt-list, .next48, .month__grid, .agenda-day__grid, .agenda-week__body,
+.kv, .consent, .hours, .legal-list, .msg-list, .med-list,
+.book-svcs, .book-slots, .empty-grid, .grid-3, .grid-4 {
+  break-inside: auto;
+}
+
+/* Cover page */
+.print-page--cover {
+  padding: 0;
+  display: grid; place-items: center;
+  min-height: calc(100vh - 24px);
+  page-break-after: always;
+  break-after: page;
+}
+.cover {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-xl);
+  padding: 56px 56px 40px;
+  width: 100%; max-width: 880px;
+}
+.cover__title { font-size: 64px; font-weight: 700; letter-spacing: -0.04em; margin-top: 4px; }
+.cover__sub { color: var(--c-text-muted); font-size: 17px; margin-top: 6px; }
+.cover__meta {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 12px; margin: 32px 0;
+  padding: 16px 0;
+  border-top: 1px solid var(--c-border);
+  border-bottom: 1px solid var(--c-border);
+}
+.cover__meta div { display: flex; flex-direction: column; gap: 2px; }
+.cover__meta span { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--c-text-faint); font-weight: 600; }
+.cover__meta strong { font-size: 14px; }
+.cover__toc {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: 6px 24px;
+  font-size: 12.5px; color: var(--c-text-muted);
+  margin-bottom: 28px;
+}
+.cover__toc li {
+  padding: 4px 0;
+  border-bottom: 1px dotted var(--c-border);
+  font-family: var(--font-mono);
+}
+.cover__foot { font-size: 11px; text-align: center; }
+
+/* Screen-only: page break before each non-first frame (visible on screen too, with separation) */
+@media screen {
+  body { background: oklch(0.93 0.005 60); padding: 24px; }
+  .print-page { background: white; padding: 20px 20px 32px; margin: 0 auto 24px; max-width: 1480px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.04); }
+  .print-page--cover { min-height: 720px; }
+}
+
+/* Print-specific tightening */
+@media print {
+  body { padding: 0; }
+  .print-page { padding: 8px 0 16px; margin: 0; box-shadow: none; }
+  /* Stop sidebar/main height from collapsing */
+  .print-frame .sidebar, .print-frame .main { min-height: 0; }
+  /* Avoid huge gaps for long screens — they may span multiple printed pages, OK */
+  .agenda-day__grid { height: auto !important; min-height: 900px; }
+  .rx-doc { box-shadow: 0 0 0 1px oklch(0.85 0.01 60); }
+  /* Pdf-friendly font rendering */
+  * { text-rendering: geometricPrecision; }
+}

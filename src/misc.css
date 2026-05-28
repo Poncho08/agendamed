@@ -1,0 +1,32 @@
+/* ============================================================
+   AgendaMed — Misc additional styles (stubs, floating btn, etc.)
+   ============================================================ */
+.stub {
+  display: grid; place-items: center;
+  padding: 60px 24px;
+  min-height: 50vh;
+}
+.stub__inner {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 12px; max-width: 380px; text-align: center;
+  border: 1px dashed var(--c-border-strong);
+  background: var(--c-surface);
+  padding: 36px 28px;
+  border-radius: var(--r-lg);
+}
+.stub__icon { color: var(--c-text-faint); }
+.stub__title { font-size: var(--fs-xl); font-weight: var(--fw-semibold); }
+.stub__msg { color: var(--c-text-muted); font-size: var(--fs-sm); }
+
+.floating-review {
+  position: fixed; bottom: 24px; left: 24px;
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 14px; height: 40px;
+  background: var(--c-text); color: var(--c-bg);
+  border-radius: var(--r-full);
+  font-size: var(--fs-sm); font-weight: var(--fw-medium);
+  box-shadow: var(--sh-md);
+  z-index: 50;
+  transition: transform var(--t-fast);
+}
+.floating-review:hover { transform: translateY(-1px); }
