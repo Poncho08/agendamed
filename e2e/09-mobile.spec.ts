@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test"
 import { TEST_SLUG } from "./helpers"
+import { BookingPublicoPage } from "./pages/BookingPublicoPage"
 
 // Este archivo corre en el proyecto 'mobile' (Pixel 7)
 // definido en playwright.config.ts
@@ -25,26 +26,11 @@ test.describe("Booking público — Móvil (Pixel 7)", () => {
   })
 
   test("flujo completo de agendado es funcional en móvil", async ({ page }) => {
-    await page.goto(`/agendar/${TEST_SLUG}`)
-
-    // Paso 1: servicio
-    await page.locator("button").filter({ hasText: /min/ }).first().click()
-
-    // Paso 2: día hábil
-    const dia = page.locator("button:not([disabled])").filter({ hasText: /^\d+$/ }).first()
-    await dia.click()
-
-    // Paso 3: slot
-    const slot = page.locator("button:not([disabled])").filter({ hasText: /^\d{2}:\d{2}$/ }).first()
-    await slot.click()
-
-    // Paso 4: datos
-    await page.getByRole("textbox", { name: /nombre completo/i }).fill("Paciente Móvil")
-    await page.locator('input[type="tel"]').fill("5599887766")
-    await page.locator(".checkbox__box").first().click()
-
-    await page.getByRole("button", { name: /confirmar cita/i }).click()
-    await expect(page.getByText("¡Cita agendada!")).toBeVisible({ timeout: 10_000 })
+    const booking = new BookingPublicoPage(page)
+    await booking.flujoCompleto(TEST_SLUG, {
+      nombre: "Paciente Móvil E2E",
+      telefono: `559988${Math.floor(1000 + Math.random() * 8999)}`,
+    })
   })
 
   test("panel del médico es navegable en móvil", async ({ page }) => {

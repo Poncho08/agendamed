@@ -31,8 +31,10 @@ test.describe("Citas — Panel del médico", () => {
     const citas = new CitasPage(page)
     await citas.gotoLista()
     await expect(page).toHaveURL(/\/panel\/citas$/)
+    await page.waitForLoadState("networkidle")
+    // La página usa ul/li, no table. El empty state dice "No hay citas registradas."
     await expect(
-      page.locator("table").first().or(page.getByText(/sin citas|no hay citas/i).first())
+      page.locator("ul").first().or(page.getByText(/registradas|no hay citas/i).first())
     ).toBeVisible({ timeout: 8_000 })
   })
 
