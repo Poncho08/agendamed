@@ -3,14 +3,13 @@ import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { fmtDate, planLabel } from "@/lib/utils"
-
-const ADMIN_EMAILS = ["silvaalfonso381@gmail.com", "admin@agendamed.mx"]
+import { isAdmin } from "@/lib/admin"
 
 export default async function AdminPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (!user || !ADMIN_EMAILS.includes(user.email ?? "")) {
+  if (!user || !isAdmin(user.email)) {
     redirect("/panel")
   }
 

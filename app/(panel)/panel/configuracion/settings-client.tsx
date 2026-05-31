@@ -28,12 +28,74 @@ interface Props {
   configMsg: ConfiguracionMensajes | null
 }
 
-export function SettingsClient({ consultorio, servicios, horarios, configMsg }: Props) {
+export function SettingsClient({ consultorio, servicios: serviciosIniciales, horarios: horariosIniciales, configMsg }: Props) {
   const [seccion, setSeccion] = useState("consultorio")
+
+  // Horarios editables
+  const [horariosState, setHorariosState] = useState(
+    horariosIniciales.map((h) => ({ ...h }))
+  )
+
+  // Servicios editables
+  const [serviciosState, setServiciosState] = useState(serviciosIniciales.map((s) => ({ ...s })))
+  const [nuevoSvc, setNuevoSvc] = useState({ nombre: "", duracion_min: 30, precio_mxn: 0 })
+  const [mostrarNuevoSvc, setMostrarNuevoSvc] = useState(false)
+
+  // Config mensajes editable
+  const [ventanaCancelacion, setVentanaCancelacion] = useState(configMsg?.ventana_cancelacion_horas ?? 3)
+
+  async function guardarHorarios() {
+    const supabase = createClient()
+    for (const h of horariosState) {
+      await supabase.from("horarios").update({
+        activo: h.activo,
+        inicio_1: h.inicio_1,
+        fin_1: h.fin_1,
+        inicio_2: h.inicio_2,
+        fin_2: h.fin_2,
+      }).eq("id", h.id)
+    }
+    toast.success("Horarios guardados")
+  }
+
+  async function guardarNuevoServicio() {
+    if (!nuevoSvc.nombre) { toast.error("El nombre es obligatorio"); return }
+    const supabase = createClient()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase.from("servicios") as any).insert({
+      consultorio_id: consultorio.id,
+      nombre: nuevoSvc.nombre,
+      duracion_min: nuevoSvc.duracion_min,
+      precio_mxn: nuevoSvc.precio_mxn,
+      orden: serviciosState.length,
+    }).select().single()
+    if (error) { toast.error("Error al guardar servicio"); return }
+    setServiciosState((prev) => [...prev, data])
+    setNuevoSvc({ nombre: "", duracion_min: 30, precio_mxn: 0 })
+    setMostrarNuevoSvc(false)
+    toast.success("Servicio agregado")
+  }
+
+  async function toggleServicio(id: string, activo: boolean) {
+    const supabase = createClient()
+    await supabase.from("servicios").update({ activo }).eq("id", id)
+    setServiciosState((prev) => prev.map((s) => s.id === id ? { ...s, activo } : s))
+  }
+
+  async function guardarVentanaCancelacion() {
+    if (!configMsg) return
+    const supabase = createClient()
+    await supabase.from("configuracion_mensajes")
+      .update({ ventana_cancelacion_horas: ventanaCancelacion })
+      .eq("id", configMsg.id)
+    toast.success("Ventana de cancelación guardada")
+  }
+
   const [form, setForm] = useState({
     nombre: consultorio.nombre,
     medico_nombre: consultorio.medico_nombre,
     especialidad: consultorio.especialidad,
+    cedula_profesional: consultorio.cedula_profesional ?? "",
     telefono: consultorio.telefono ?? "",
     email: consultorio.email,
     direccion: consultorio.direccion ?? "",
@@ -96,13 +158,15 @@ export function SettingsClient({ consultorio, servicios, horarios, configMsg }: 
                   { key: "nombre", label: "Nombre del consultorio", required: true },
                   { key: "medico_nombre", label: "Nombre del médico responsable", required: true },
                   { key: "especialidad", label: "Especialidad" },
+                  { key: "cedula_profesional", label: "Cédula profesional", hint: "Aparece en recetas — requerida para validez legal" },
                   { key: "telefono", label: "Teléfono" },
                   { key: "email", label: "Email del consultorio" },
                   { key: "ciudad", label: "Ciudad / Estado" },
                   { key: "codigo_postal", label: "Código postal" },
-                ].map(({ key, label, required }) => (
+                ].map(({ key, label, required, hint }: { key: string; label: string; required?: boolean; hint?: string }) => (
                   <div key={key} className="field">
                     <label className="field__label">{label}{required && " *"}</label>
+                    {hint && <span className="field__hint">{hint}</span>}
                     <input
                       className="input"
                       value={form[key as keyof typeof form]}
@@ -130,6 +194,7 @@ export function SettingsClient({ consultorio, servicios, horarios, configMsg }: 
                 nombre: consultorio.nombre,
                 medico_nombre: consultorio.medico_nombre,
                 especialidad: consultorio.especialidad,
+                cedula_profesional: consultorio.cedula_profesional ?? "",
                 telefono: consultorio.telefono ?? "",
                 email: consultorio.email,
                 direccion: consultorio.direccion ?? "",
@@ -143,77 +208,106 @@ export function SettingsClient({ consultorio, servicios, horarios, configMsg }: 
 
         {/* Horarios */}
         {seccion === "horarios" && (
-          <div className="card">
-            <div className="card__head">
-              <div>
-                <div className="card__title">Horarios de atención</div>
-                <div className="card__sub">Define cuándo aceptas citas. Aplica a la página pública.</div>
+          <>
+            <div className="card">
+              <div className="card__head">
+                <div>
+                  <div className="card__title">Horarios de atención</div>
+                  <div className="card__sub">Define cuándo aceptas citas. Aplica a la página pública.</div>
+                </div>
               </div>
+              <ul style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+                {DIAS.map((dia, i) => {
+                  const h = horariosState.find((x) => x.dia_semana === DIAS_MAP[i])
+                  if (!h) return null
+                  return (
+                    <li
+                      key={dia}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 12,
+                        padding: "10px 0",
+                        borderBottom: i < 6 ? "1px solid var(--c-border-faint)" : "none",
+                        opacity: h.activo ? 1 : 0.45,
+                      }}
+                    >
+                      <span style={{ width: 36, fontSize: "var(--fs-sm)", fontWeight: 500, flexShrink: 0 }}>{dia}</span>
+                      {h.activo ? (
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, flexWrap: "wrap" }}>
+                          <input type="time" className="input" style={{ width: 100, fontSize: "var(--fs-xs)", padding: "4px 8px" }}
+                            value={h.inicio_1 ?? ""} onChange={(e) => setHorariosState((prev) => prev.map((x) => x.id === h.id ? { ...x, inicio_1: e.target.value } : x))} />
+                          <span className="muted" style={{ fontSize: "var(--fs-xs)" }}>—</span>
+                          <input type="time" className="input" style={{ width: 100, fontSize: "var(--fs-xs)", padding: "4px 8px" }}
+                            value={h.fin_1 ?? ""} onChange={(e) => setHorariosState((prev) => prev.map((x) => x.id === h.id ? { ...x, fin_1: e.target.value } : x))} />
+                        </div>
+                      ) : (
+                        <span className="muted" style={{ fontSize: "var(--fs-sm)", flex: 1 }}>Cerrado</span>
+                      )}
+                      <button
+                        className={`toggle ${h.activo ? "on" : ""}`}
+                        onClick={() => setHorariosState((prev) => prev.map((x) => x.id === h.id ? { ...x, activo: !x.activo } : x))}
+                      >
+                        <div className="toggle__thumb" />
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
             </div>
-            <ul style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-              {DIAS.map((dia, i) => {
-                const h = horarios.find((x) => x.dia_semana === DIAS_MAP[i])
-                return (
-                  <li
-                    key={dia}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 16,
-                      padding: "10px 0",
-                      borderBottom: i < 6 ? "1px solid var(--c-border-faint)" : "none",
-                      opacity: h?.activo === false ? 0.5 : 1,
-                    }}
-                  >
-                    <span style={{ width: 40, fontSize: "var(--fs-sm)", fontWeight: 500 }}>{dia}</span>
-                    <span className="mono muted" style={{ fontSize: "var(--fs-sm)", flex: 1 }}>
-                      {h?.activo === false
-                        ? "Cerrado"
-                        : h
-                        ? `${h.inicio_1 ?? "—"} — ${h.fin_1 ?? "—"}${h.inicio_2 ? ` · ${h.inicio_2} — ${h.fin_2}` : ""}`
-                        : "—"}
-                    </span>
-                    <button className={`toggle ${h?.activo !== false ? "on" : ""}`}>
-                      <div className="toggle__thumb" />
-                    </button>
-                  </li>
-                )
-              })}
-            </ul>
-          </div>
+            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              <button className="btn btn-primary" onClick={guardarHorarios}>Guardar horarios</button>
+            </div>
+          </>
         )}
 
         {/* Servicios */}
         {seccion === "servicios" && (
-          <div className="card">
-            <div className="card__head">
-              <div className="card__title">Servicios y duraciones</div>
-              <button className="btn btn-secondary btn-sm">+ Nuevo servicio</button>
+          <div className="stack">
+            <div className="card">
+              <div className="card__head">
+                <div className="card__title">Servicios y duraciones</div>
+                <button className="btn btn-secondary btn-sm" onClick={() => setMostrarNuevoSvc((v) => !v)}>
+                  {mostrarNuevoSvc ? "Cancelar" : "+ Nuevo servicio"}
+                </button>
+              </div>
+
+              {mostrarNuevoSvc && (
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 110px 110px auto", gap: 10, alignItems: "end", marginBottom: 16, padding: "14px", background: "var(--c-surface-2)", borderRadius: "var(--r-md)" }}>
+                  <div className="field">
+                    <label className="field__label">Nombre del servicio</label>
+                    <input className="input" placeholder="Consulta general" value={nuevoSvc.nombre}
+                      onChange={(e) => setNuevoSvc((s) => ({ ...s, nombre: e.target.value }))} />
+                  </div>
+                  <div className="field">
+                    <label className="field__label">Duración</label>
+                    <select className="select" value={nuevoSvc.duracion_min}
+                      onChange={(e) => setNuevoSvc((s) => ({ ...s, duracion_min: +e.target.value }))}>
+                      {[15, 20, 30, 45, 60, 90].map((m) => <option key={m} value={m}>{m} min</option>)}
+                    </select>
+                  </div>
+                  <div className="field">
+                    <label className="field__label">Precio MXN</label>
+                    <input className="input" type="number" placeholder="500" value={nuevoSvc.precio_mxn || ""}
+                      onChange={(e) => setNuevoSvc((s) => ({ ...s, precio_mxn: +e.target.value }))} />
+                  </div>
+                  <button className="btn btn-primary" onClick={guardarNuevoServicio}>Guardar</button>
+                </div>
+              )}
+
+              <ul>
+                {serviciosState.map((s, i) => (
+                  <li key={s.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: i < serviciosState.length - 1 ? "1px solid var(--c-border-faint)" : "none" }}>
+                    <span style={{ flex: 1, fontSize: "var(--fs-sm)", fontWeight: 500, opacity: s.activo ? 1 : 0.5 }}>{s.nombre}</span>
+                    <span className="muted" style={{ fontSize: "var(--fs-xs)" }}>{s.duracion_min} min</span>
+                    <span className="mono" style={{ fontSize: "var(--fs-sm)" }}>{fmtMxn(s.precio_mxn)}</span>
+                    <button className={`toggle ${s.activo ? "on" : ""}`} onClick={() => toggleServicio(s.id, !s.activo)}>
+                      <div className="toggle__thumb" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
             </div>
-            <ul>
-              {servicios.map((s, i) => (
-                <li
-                  key={s.id}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 12,
-                    padding: "10px 0",
-                    borderBottom: i < servicios.length - 1 ? "1px solid var(--c-border-faint)" : "none",
-                  }}
-                >
-                  <span style={{ flex: 1, fontSize: "var(--fs-sm)", fontWeight: 500 }}>{s.nombre}</span>
-                  <span className="muted" style={{ fontSize: "var(--fs-xs)" }}>{s.duracion_min} min</span>
-                  <span className="mono" style={{ fontSize: "var(--fs-sm)" }}>{fmtMxn(s.precio_mxn)}</span>
-                  <button className={`toggle ${s.activo ? "on" : ""}`}><div className="toggle__thumb" /></button>
-                  <button className="iconbtn">
-                    <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                    </svg>
-                  </button>
-                </li>
-              ))}
-            </ul>
           </div>
         )}
 
@@ -259,15 +353,20 @@ export function SettingsClient({ consultorio, servicios, horarios, configMsg }: 
             </div>
             <div className="card">
               <div className="card__head"><div className="card__title">Ventana de cancelación</div></div>
-              <div className="field">
+              <div className="field" style={{ marginBottom: 16 }}>
                 <label className="field__label">Tiempo mínimo antes de la cita para cancelar</label>
                 <span className="field__hint">Pasado este plazo, el paciente deberá llamar al consultorio.</span>
-                <select className="select">
+                <select
+                  className="select"
+                  value={ventanaCancelacion}
+                  onChange={(e) => setVentanaCancelacion(+e.target.value)}
+                >
                   {[3, 6, 12, 24].map((h) => (
-                    <option key={h} value={h} selected={configMsg?.ventana_cancelacion_horas === h}>{h} horas</option>
+                    <option key={h} value={h}>{h} horas</option>
                   ))}
                 </select>
               </div>
+              <button className="btn btn-primary" onClick={guardarVentanaCancelacion}>Guardar</button>
             </div>
           </>
         )}

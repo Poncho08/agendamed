@@ -14,6 +14,7 @@ import {
   CreditCard,
   LogOut,
   Stethoscope,
+  Share2,
 } from "lucide-react"
 import { useState } from "react"
 import { createClient } from "@/lib/supabase/client"
@@ -33,6 +34,7 @@ const NAV = [
   },
   { href: "/panel/pacientes", label: "Pacientes", icon: Users },
   { href: "/panel/recetas", label: "Recetas", icon: FileText },
+  { href: "/panel/portal", label: "Portal de citas", icon: Share2 },
   { href: "/panel/configuracion", label: "Configuración", icon: Settings },
 ]
 

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { createClient } from "@/lib/supabase/client"
 import { Plus, Trash2, Eye } from "lucide-react"
+import { Cie10Input } from "@/components/cie10-input"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { fmtEdad } from "@/lib/utils"
@@ -72,7 +73,7 @@ export function NuevaRecetaForm({ consultorio, pacientes, plantillas }: Props) {
       .insert({
         consultorio_id: consultorio.id,
         paciente_id: pacienteId,
-        folio: folioData ?? `RX-${Date.now()}`,
+        folio: folioData ?? `RX-${consultorio.id.slice(0, 8).toUpperCase()}-${Date.now()}`,
         diagnostico,
         medicamentos: meds.map(({ id, ...m }) => m),
         indicaciones: indicaciones || null,
@@ -149,12 +150,15 @@ export function NuevaRecetaForm({ consultorio, pacientes, plantillas }: Props) {
 
         {/* Diagnóstico */}
         <div className="card">
-          <div className="card__head"><div className="card__title">Diagnóstico</div></div>
-          <input
-            className="input"
+          <div className="card__head">
+            <div>
+              <div className="card__title">Diagnóstico</div>
+              <div className="card__sub">Escribe o busca por nombre o código CIE-10</div>
+            </div>
+          </div>
+          <Cie10Input
             value={diagnostico}
-            onChange={(e) => setDiagnostico(e.target.value)}
-            placeholder="Ej: Hipertensión arterial controlada"
+            onChange={setDiagnostico}
           />
         </div>
 
@@ -216,6 +220,7 @@ export function NuevaRecetaForm({ consultorio, pacientes, plantillas }: Props) {
             rows={5}
             placeholder="Recomendaciones, cuidados, frecuencia de monitoreo…"
             value={indicaciones}
+            maxLength={1500}
             onChange={(e) => setIndicaciones(e.target.value)}
           />
           <div className="muted" style={{ fontSize: "var(--fs-xs)", marginTop: 4, textAlign: "right" }}>
@@ -310,8 +315,7 @@ export function NuevaRecetaForm({ consultorio, pacientes, plantillas }: Props) {
               <div style={{ marginTop: 8, lineHeight: 1.6 }}>
                 <div style={{ fontWeight: 600 }}>{consultorio.medico_nombre}</div>
                 <div>{consultorio.especialidad}</div>
-                {/* Cédula comentada hasta deploy final */}
-                {/* <div>Céd. {consultorio.cedula_profesional}</div> */}
+                {consultorio.cedula_profesional && <div>Céd. {consultorio.cedula_profesional}</div>}
               </div>
             </div>
             <div style={{ textAlign: "right", lineHeight: 1.6, fontSize: 10 }}>
@@ -363,8 +367,9 @@ export function NuevaRecetaForm({ consultorio, pacientes, plantillas }: Props) {
           <div style={{ marginTop: 24, paddingTop: 12, borderTop: "1px solid #ddd" }}>
             <div style={{ width: 100, borderBottom: "1px solid #222", marginBottom: 4 }} />
             <div style={{ fontWeight: 600 }}>{consultorio.medico_nombre}</div>
-            {/* Cédula comentada hasta deploy final */}
-            {/* <div style={{ color: "#666", fontSize: 10 }}>Cédula: {consultorio.cedula_profesional}</div> */}
+            {consultorio.cedula_profesional && (
+              <div style={{ color: "#666", fontSize: 10 }}>Cédula profesional: {consultorio.cedula_profesional}</div>
+            )}
           </div>
 
           <div style={{ marginTop: 12, fontSize: 9, color: "#aaa", borderTop: "1px solid #eee", paddingTop: 8 }}>

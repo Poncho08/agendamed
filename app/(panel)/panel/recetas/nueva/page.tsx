@@ -1,6 +1,18 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { NuevaRecetaForm } from "./nueva-receta-form"
+import type { PlantillaReceta } from "@/types/database"
+
+// Plantilla de Historia Clínica Preliminar siempre disponible (no se guarda en DB)
+const PLANTILLA_HC_PRELIMINAR: PlantillaReceta = {
+  id: "__hc_preliminar__",
+  created_at: "",
+  consultorio_id: "",
+  nombre: "📋 Historia Clínica Preliminar",
+  diagnostico: "Motivo de consulta: \nEnfermedad actual: \nAntecedentes heredofamiliares: \nAntecedentes personales patológicos: \nAntecedentes no patológicos: \nAlergias conocidas: \nMedicamentos actuales:",
+  medicamentos: [],
+  indicaciones: "Exploración física:\n- TA:\n- FC:\n- FR:\n- Temp:\n- Peso:\n- Talla:\n- IMC:\n\nImpresión diagnóstica:",
+}
 
 export default async function NuevaRecetaPage() {
   const supabase = await createClient()
@@ -38,7 +50,7 @@ export default async function NuevaRecetaPage() {
       <NuevaRecetaForm
         consultorio={consultorio}
         pacientes={pacientes ?? []}
-        plantillas={plantillas ?? []}
+        plantillas={[PLANTILLA_HC_PRELIMINAR, ...(plantillas ?? [])]}
       />
     </div>
   )

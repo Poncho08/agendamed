@@ -16,7 +16,6 @@ export function LoginForm() {
   const [loading, setLoading] = useState(false)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [remember, setRemember] = useState(true)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -90,21 +89,7 @@ export function LoginForm() {
         />
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <label className="checkbox" style={{ cursor: "pointer" }}>
-          <div
-            className={`checkbox__box ${remember ? "checked" : ""}`}
-            onClick={() => setRemember((r) => !r)}
-            style={{ cursor: "pointer" }}
-          >
-            {remember && (
-              <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                <path d="M1 4l3 3 5-6" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            )}
-          </div>
-          <span className="checkbox__label">Mantenerme conectado</span>
-        </label>
+      <div style={{ display: "flex", justifyContent: "flex-end" }}>
         <button
           type="button"
           className="link"

@@ -29,6 +29,14 @@ export function OnboardingFlow() {
   const router = useRouter()
   const [paso, setPaso] = useState(1)
 
+  // Paso 1: datos del consultorio
+  const [datos, setDatos] = useState({
+    telefono: "",
+    ciudad: "",
+    direccion: "",
+    codigo_postal: "",
+  })
+
   // Paso 2: horarios
   const [horarios, setHorarios] = useState(
     DIAS.map((dia, i) => ({
@@ -73,6 +81,16 @@ export function OnboardingFlow() {
 
     if (!consultorio) return
     const consultorioId = (consultorio as unknown as { id: string }).id
+
+    // Guardar datos del consultorio del paso 1
+    const datosActualizados: Record<string, string> = {}
+    if (datos.telefono) datosActualizados.telefono = datos.telefono
+    if (datos.ciudad) datosActualizados.ciudad = datos.ciudad
+    if (datos.direccion) datosActualizados.direccion = datos.direccion
+    if (datos.codigo_postal) datosActualizados.codigo_postal = datos.codigo_postal
+    if (Object.keys(datosActualizados).length > 0) {
+      await supabase.from("consultorios").update(datosActualizados).eq("id", consultorioId)
+    }
 
     // Guardar servicios
     if (servicios.length > 0) {
@@ -207,19 +225,39 @@ export function OnboardingFlow() {
                 <div className="grid-2">
                   <div className="field">
                     <label className="field__label">Teléfono de contacto</label>
-                    <input className="input" placeholder="33 1234 5678" />
+                    <input
+                      className="input"
+                      placeholder="33 1234 5678"
+                      value={datos.telefono}
+                      onChange={(e) => setDatos((d) => ({ ...d, telefono: e.target.value }))}
+                    />
                   </div>
                   <div className="field">
                     <label className="field__label">Ciudad / Estado</label>
-                    <input className="input" placeholder="Guadalajara, Jalisco" />
+                    <input
+                      className="input"
+                      placeholder="Guadalajara, Jalisco"
+                      value={datos.ciudad}
+                      onChange={(e) => setDatos((d) => ({ ...d, ciudad: e.target.value }))}
+                    />
                   </div>
                   <div className="field" style={{ gridColumn: "1/-1" }}>
                     <label className="field__label">Dirección del consultorio</label>
-                    <input className="input" placeholder="Av. Vallarta 1234, Col. Américas" />
+                    <input
+                      className="input"
+                      placeholder="Av. Vallarta 1234, Col. Américas"
+                      value={datos.direccion}
+                      onChange={(e) => setDatos((d) => ({ ...d, direccion: e.target.value }))}
+                    />
                   </div>
                   <div className="field">
                     <label className="field__label">Código postal</label>
-                    <input className="input" placeholder="44160" />
+                    <input
+                      className="input"
+                      placeholder="44160"
+                      value={datos.codigo_postal}
+                      onChange={(e) => setDatos((d) => ({ ...d, codigo_postal: e.target.value }))}
+                    />
                   </div>
                 </div>
               </div>
@@ -236,26 +274,54 @@ export function OnboardingFlow() {
                 <p className="muted" style={{ fontSize: "var(--fs-sm)", marginBottom: 16 }}>
                   Define cuándo aceptas citas. Aplica a la página pública y al booking de pacientes.
                 </p>
-                <ul style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <ul style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                   {horarios.map((h, i) => (
-                    <li key={i} style={{ display: "flex", alignItems: "center", gap: 12, opacity: h.activo ? 1 : 0.4 }}>
-                      <span style={{ width: 32, fontSize: "var(--fs-sm)", fontWeight: 500 }}>{h.dia}</span>
+                    <li key={i} style={{ display: "flex", alignItems: "center", gap: 10, opacity: h.activo ? 1 : 0.45 }}>
+                      <span style={{ width: 32, fontSize: "var(--fs-sm)", fontWeight: 500, flexShrink: 0 }}>{h.dia}</span>
                       {h.activo ? (
-                        <span className="mono" style={{ fontSize: "var(--fs-sm)", color: "var(--c-text-muted)" }}>
-                          {h.inicio1} — {h.fin1}
-                          {h.inicio2 && ` · ${h.inicio2} — ${h.fin2}`}
-                        </span>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, flexWrap: "wrap" }}>
+                          <input
+                            type="time"
+                            className="input"
+                            style={{ width: 90, fontSize: "var(--fs-xs)", padding: "4px 8px" }}
+                            value={h.inicio1}
+                            onChange={(e) => setHorarios((prev) => prev.map((x, j) => j === i ? { ...x, inicio1: e.target.value } : x))}
+                          />
+                          <span className="muted" style={{ fontSize: "var(--fs-xs)" }}>—</span>
+                          <input
+                            type="time"
+                            className="input"
+                            style={{ width: 90, fontSize: "var(--fs-xs)", padding: "4px 8px" }}
+                            value={h.fin1}
+                            onChange={(e) => setHorarios((prev) => prev.map((x, j) => j === i ? { ...x, fin1: e.target.value } : x))}
+                          />
+                          {h.inicio2 && (
+                            <>
+                              <span className="muted" style={{ fontSize: "var(--fs-xs)" }}>·</span>
+                              <input
+                                type="time"
+                                className="input"
+                                style={{ width: 90, fontSize: "var(--fs-xs)", padding: "4px 8px" }}
+                                value={h.inicio2}
+                                onChange={(e) => setHorarios((prev) => prev.map((x, j) => j === i ? { ...x, inicio2: e.target.value } : x))}
+                              />
+                              <span className="muted" style={{ fontSize: "var(--fs-xs)" }}>—</span>
+                              <input
+                                type="time"
+                                className="input"
+                                style={{ width: 90, fontSize: "var(--fs-xs)", padding: "4px 8px" }}
+                                value={h.fin2}
+                                onChange={(e) => setHorarios((prev) => prev.map((x, j) => j === i ? { ...x, fin2: e.target.value } : x))}
+                              />
+                            </>
+                          )}
+                        </div>
                       ) : (
-                        <span className="muted" style={{ fontSize: "var(--fs-sm)" }}>Cerrado</span>
+                        <span className="muted" style={{ fontSize: "var(--fs-sm)", flex: 1 }}>Cerrado</span>
                       )}
                       <button
                         className={`toggle ${h.activo ? "on" : ""}`}
-                        onClick={() =>
-                          setHorarios((prev) =>
-                            prev.map((x, j) => (j === i ? { ...x, activo: !x.activo } : x))
-                          )
-                        }
-                        style={{ marginLeft: "auto" }}
+                        onClick={() => setHorarios((prev) => prev.map((x, j) => j === i ? { ...x, activo: !x.activo } : x))}
                       >
                         <div className="toggle__thumb" />
                       </button>

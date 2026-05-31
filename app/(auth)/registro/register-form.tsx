@@ -77,8 +77,27 @@ export function RegisterForm() {
       return
     }
 
+    // Generar slug único: si ya existe, agregar sufijo numérico
+    const baseSlug = slugify(form.nombreConsultorio)
+    let slug = baseSlug
+    let intento = 0
+    let slugLibre = false
+
+    while (!slugLibre && intento < 10) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: existente } = await (supabase.from("consultorios") as any)
+        .select("id")
+        .eq("slug", slug)
+        .maybeSingle()
+      if (!existente) {
+        slugLibre = true
+      } else {
+        intento++
+        slug = `${baseSlug}-${intento}`
+      }
+    }
+
     // Crear consultorio
-    const slug = slugify(form.nombreConsultorio)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error: consError } = await (supabase.from("consultorios") as any).insert({
       user_id: authData.user.id,
@@ -90,7 +109,10 @@ export function RegisterForm() {
     })
 
     if (consError) {
-      toast.error("Error al crear el consultorio. Intenta de nuevo.")
+      // Limpiar el usuario de Auth para no dejarlo huérfano
+      await supabase.auth.admin?.deleteUser?.(authData.user.id).catch(() => {})
+      await supabase.auth.signOut()
+      toast.error("Error al crear el consultorio. Intenta de nuevo en unos segundos.")
       setLoading(false)
       return
     }

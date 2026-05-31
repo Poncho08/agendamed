@@ -2,8 +2,7 @@ import { createServiceClient, createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { AdminConsultorioForm } from "./form"
-
-const ADMIN_EMAILS = ["silvaalfonso381@gmail.com", "admin@agendamed.mx"]
+import { isAdmin } from "@/lib/admin"
 
 export default async function AdminConsultorioPage({
   params,
@@ -15,7 +14,7 @@ export default async function AdminConsultorioPage({
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (!user || !ADMIN_EMAILS.includes(user.email ?? "")) {
+  if (!user || !isAdmin(user.email)) {
     redirect("/panel")
   }
 

@@ -75,8 +75,7 @@ export function RecetaPDF({ receta }: Props) {
             <Text style={styles.logo}>AgendaMed</Text>
             <Text style={styles.medicoNombre}>{cons?.medico_nombre}</Text>
             <Text>{cons?.especialidad}</Text>
-            {/* Cédula comentada hasta deploy final */}
-            {/* <Text>Céd. Prof. {cons?.cedula_profesional}</Text> */}
+            {cons?.cedula_profesional && <Text>Céd. Prof. {cons.cedula_profesional}</Text>}
             <Text>{cons?.email}</Text>
           </View>
           <View style={styles.headerRight}>
@@ -125,8 +124,9 @@ export function RecetaPDF({ receta }: Props) {
         <View>
           <View style={styles.signLine} />
           <Text style={{ fontWeight: "bold" }}>{cons?.medico_nombre}</Text>
-          {/* Cédula comentada hasta deploy final */}
-          {/* <Text style={{ color: "#666", fontSize: 9 }}>Cédula profesional {cons?.cedula_profesional}</Text> */}
+          {cons?.cedula_profesional && (
+            <Text style={{ color: "#666", fontSize: 9 }}>Cédula profesional: {cons.cedula_profesional}</Text>
+          )}
         </View>
 
         {/* Footer */}

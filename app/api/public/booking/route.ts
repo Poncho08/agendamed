@@ -3,8 +3,10 @@ import { createServiceClient } from "@/lib/supabase/server"
 import { z } from "zod"
 import { sendConfirmacionCita } from "@/lib/resend"
 import { sendWhatsApp, msgConfirmacionCita } from "@/lib/twilio"
-import { format } from "date-fns"
+import { formatInTimeZone } from "date-fns-tz"
 import { es } from "date-fns/locale"
+
+const TZ = "America/Mexico_City"
 
 const schema = z.object({
   consultorio_id: z.string().uuid(),
@@ -117,10 +119,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Error creando cita" }, { status: 500 })
   }
 
-  // Enviar confirmación
+  // Enviar confirmación — formatear siempre en zona horaria del consultorio (México)
   const inicioDate = new Date(inicio)
-  const fechaStr = format(inicioDate, "d 'de' MMMM yyyy", { locale: es })
-  const horaStr = format(inicioDate, "HH:mm")
+  const fechaStr = formatInTimeZone(inicioDate, TZ, "d 'de' MMMM yyyy", { locale: es })
+  const horaStr = formatInTimeZone(inicioDate, TZ, "HH:mm")
   const cancelUrl = `${process.env.NEXT_PUBLIC_APP_URL}/cancelar/${cita.cancelacion_token}`
 
   // WhatsApp (solo si tiene consentimiento)

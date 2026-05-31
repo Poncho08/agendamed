@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient, createServiceClient } from "@/lib/supabase/server"
 import { z } from "zod"
-
-const ADMIN_EMAILS = ["silvaalfonso381@gmail.com", "admin@agendamed.mx"]
+import { isAdmin } from "@/lib/admin"
 
 const schema = z.object({
   plan: z.enum(["prueba", "base", "pro"]).optional(),
@@ -19,7 +18,7 @@ export async function PATCH(
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (!user || !ADMIN_EMAILS.includes(user.email ?? "")) {
+  if (!user || !isAdmin(user.email)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 

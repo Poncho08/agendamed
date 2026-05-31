@@ -40,6 +40,8 @@ export function PublicBookingClient({ consultorioId, servicios, horarios }: Prop
     nombre: "", telefono: "", email: "", consentimiento: false, consentimientoWA: false,
   })
   const [loading, setLoading] = useState(false)
+  const [loadingSlots, setLoadingSlots] = useState(false)
+  const [slotsOcupados, setSlotsOcupados] = useState<string[]>([])
   const [exitoso, setExitoso] = useState(false)
 
   const [mesVista, setMesVista] = useState(new Date())
@@ -47,6 +49,25 @@ export function PublicBookingClient({ consultorioId, servicios, horarios }: Prop
   const diasCal = Array.from({ length: 42 }, (_, i) => addDays(primerDia, i))
 
   const servicio = servicios.find(s => s.id === servicioId)
+
+  async function cargarDisponibilidad(d: Date, svcId: string) {
+    const svc = servicios.find(s => s.id === svcId)
+    if (!svc) return
+    setLoadingSlots(true)
+    setSlotsOcupados([])
+    try {
+      const fechaStr = format(d, "yyyy-MM-dd")
+      const res = await fetch(
+        `/api/public/disponibilidad?consultorio_id=${consultorioId}&fecha=${fechaStr}&duracion=${svc.duracion_min}`
+      )
+      if (res.ok) {
+        const data = await res.json()
+        setSlotsOcupados(data.slotsOcupados ?? [])
+      }
+    } finally {
+      setLoadingSlots(false)
+    }
+  }
 
   function diaHabilitado(d: Date) {
     const dow = d.getDay() // 0=dom
@@ -184,7 +205,11 @@ export function PublicBookingClient({ consultorioId, servicios, horarios }: Prop
                 <button
                   key={i}
                   disabled={!esHabil || !esMes}
-                  onClick={() => { setFecha(d); setPaso(3) }}
+                  onClick={() => {
+                    setFecha(d)
+                    cargarDisponibilidad(d, servicioId)
+                    setPaso(3)
+                  }}
                   style={{
                     width: "100%", aspectRatio: "1", borderRadius: "50%", fontSize: 13,
                     fontWeight: esSelec ? 700 : 400,
@@ -211,25 +236,35 @@ export function PublicBookingClient({ consultorioId, servicios, horarios }: Prop
           <div style={{ fontWeight: 600, fontSize: "var(--fs-md)", marginBottom: 4, textTransform: "capitalize" }}>
             {format(fecha, "EEEE d 'de' MMMM", { locale: es })}
           </div>
-          <p className="muted" style={{ fontSize: "var(--fs-sm)", marginBottom: 16 }}>Elige el horario:</p>
+          <p className="muted" style={{ fontSize: "var(--fs-sm)", marginBottom: 16 }}>
+            {loadingSlots ? "Verificando disponibilidad…" : "Elige el horario:"}
+          </p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
-            {SLOTS.map(s => (
-              <button
-                key={s}
-                onClick={() => { setSlot(s); setPaso(4) }}
-                style={{
-                  padding: "10px 4px",
-                  border: `1.5px solid ${slot === s ? "var(--c-brand)" : "var(--c-border)"}`,
-                  borderRadius: "var(--r-sm)",
-                  fontFamily: "var(--font-mono)",
-                  fontSize: "var(--fs-sm)",
-                  background: slot === s ? "var(--c-brand-soft)" : "transparent",
-                  color: slot === s ? "var(--c-brand-fg)" : "var(--c-text)",
-                }}
-              >
-                {s}
-              </button>
-            ))}
+            {SLOTS.map(s => {
+              const ocupado = slotsOcupados.includes(s)
+              return (
+                <button
+                  key={s}
+                  disabled={ocupado || loadingSlots}
+                  onClick={() => { setSlot(s); setPaso(4) }}
+                  title={ocupado ? "Horario ocupado" : undefined}
+                  style={{
+                    padding: "10px 4px",
+                    border: `1.5px solid ${slot === s ? "var(--c-brand)" : ocupado ? "var(--c-border-faint)" : "var(--c-border)"}`,
+                    borderRadius: "var(--r-sm)",
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "var(--fs-sm)",
+                    background: slot === s ? "var(--c-brand-soft)" : "transparent",
+                    color: slot === s ? "var(--c-brand-fg)" : ocupado ? "var(--c-text-faint)" : "var(--c-text)",
+                    opacity: ocupado ? 0.4 : 1,
+                    cursor: ocupado ? "not-allowed" : "pointer",
+                    textDecoration: ocupado ? "line-through" : "none",
+                  }}
+                >
+                  {s}
+                </button>
+              )
+            })}
           </div>
           <button className="btn btn-ghost btn-sm" style={{ marginTop: 12 }} onClick={() => setPaso(2)}>
             ← Cambiar fecha
