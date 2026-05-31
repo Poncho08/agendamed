@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
     const inicioSlot = new Date(`${fecha}T${slot}:00.000Z`)
     const finSlot = new Date(inicioSlot.getTime() + duracion * 60 * 1000)
 
-    const ocupado = (citas ?? []).some((c) => {
+    const ocupado = (citas ?? []).some((c: { inicio: string; fin: string }) => {
       const ci = new Date(c.inicio)
       const cf = new Date(c.fin)
       return ci < finSlot && cf > inicioSlot
