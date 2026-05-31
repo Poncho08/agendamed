@@ -62,7 +62,8 @@ test.describe("Booking público — Flujo del paciente", () => {
     await booking.seleccionarPrimerDiaHabil()
     await booking.seleccionarPrimerSlot()
 
-    await page.getByRole("textbox", { name: /nombre completo/i }).fill("Paciente Test")
+    // Usar placeholder real — el input no tiene aria-label
+    await page.locator('input[placeholder*="Tu nombre" i]').fill("Paciente Test")
     await page.locator('input[type="tel"]').fill("5512345678")
     // Sin aceptar privacidad → botón deshabilitado
     await expect(

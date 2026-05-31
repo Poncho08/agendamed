@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createServiceClient } from "@/lib/supabase/server"
+import { fromZonedTime } from "date-fns-tz"
+
+const TZ = "America/Mexico_City"
 
 // GET /api/public/disponibilidad?consultorio_id=xxx&fecha=2025-06-10&duracion=30
 export async function GET(request: NextRequest) {
@@ -14,9 +17,10 @@ export async function GET(request: NextRequest) {
 
   const supabase = createServiceClient()
 
-  // Traer citas del día que NO estén canceladas
-  const inicioDelDia = `${fecha}T00:00:00.000Z`
-  const finDelDia = `${fecha}T23:59:59.999Z`
+  // Traer citas del día completo en zona horaria México
+  // El cliente envía la fecha en hora local México, el servidor debe consultar lo mismo
+  const inicioDelDia = fromZonedTime(`${fecha}T00:00:00`, TZ).toISOString()
+  const finDelDia = fromZonedTime(`${fecha}T23:59:59`, TZ).toISOString()
 
   const { data: citas } = await supabase
     .from("citas")
@@ -26,9 +30,6 @@ export async function GET(request: NextRequest) {
     .gte("inicio", inicioDelDia)
     .lte("inicio", finDelDia)
 
-  // Calcular qué slots están ocupados
-  // Un slot de HH:mm está ocupado si la cita que empezaría ahí se solaparía
-  // con alguna cita existente
   const SLOTS = [
     "08:00","08:30","09:00","09:30","10:00","10:30","11:00","11:30",
     "12:00","12:30","13:00","13:30","14:00","14:30","15:00","15:30",
@@ -38,7 +39,8 @@ export async function GET(request: NextRequest) {
   const slotsOcupados: string[] = []
 
   for (const slot of SLOTS) {
-    const inicioSlot = new Date(`${fecha}T${slot}:00.000Z`)
+    // Construir inicio del slot en hora México (igual que hace el cliente)
+    const inicioSlot = fromZonedTime(`${fecha}T${slot}:00`, TZ)
     const finSlot = new Date(inicioSlot.getTime() + duracion * 60 * 1000)
 
     const ocupado = (citas ?? []).some((c: { inicio: string; fin: string }) => {
