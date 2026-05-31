@@ -5,6 +5,7 @@ import { TEST_SLUG } from "./helpers"
 // definido en playwright.config.ts
 
 test.describe("Booking público — Móvil (Pixel 7)", () => {
+  test.setTimeout(90_000)
 
   test("página pública carga en móvil", async ({ page }) => {
     await page.goto(`/agendar/${TEST_SLUG}`)

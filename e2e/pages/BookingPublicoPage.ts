@@ -13,34 +13,30 @@ export class BookingPublicoPage {
   }
 
   async seleccionarPrimerServicio() {
-    // Paso 1: primer botón que contenga "min" (servicios tienen duración en minutos)
     await this.page.locator("button").filter({ hasText: /min/ }).first().click()
-    // Verificar avance al paso 2 (aparece calendario)
     await expect(
       this.page.getByText(/enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre/i).first()
     ).toBeVisible({ timeout: 8_000 })
   }
 
   async seleccionarPrimerDiaHabil() {
-    // Paso 2: primer día no deshabilitado del calendario
-    // Los días son botones con solo dígitos como texto
+    // Timeout generoso — el calendario puede tardar en renderizar en producción
     const diaHabil = this.page.locator("button:not([disabled])").filter({ hasText: /^\d{1,2}$/ }).first()
+    await expect(diaHabil).toBeVisible({ timeout: 15_000 })
     await diaHabil.click()
-    // Verificar avance al paso 3 (aparece selección de hora)
+    // Esperar a que aparezcan los slots (paso 3) — timeout generoso para API de disponibilidad
     await expect(
-      this.page.getByText(/elige el horario|horario/i).or(
-        this.page.locator("button").filter({ hasText: /^\d{2}:\d{2}$/ }).first()
-      )
-    ).toBeVisible({ timeout: 8_000 })
+      this.page.locator("button").filter({ hasText: /^\d{2}:\d{2}$/ }).first()
+    ).toBeVisible({ timeout: 20_000 })
   }
 
   async seleccionarPrimerSlot() {
-    // Paso 3: primer slot disponible (no deshabilitado)
+    // Esperar a que haya al menos un slot habilitado
     const slot = this.page.locator("button:not([disabled])").filter({ hasText: /^\d{2}:\d{2}$/ }).first()
-    await expect(slot).toBeVisible({ timeout: 8_000 })
+    await expect(slot).toBeVisible({ timeout: 20_000 })
     await slot.click()
-    // Verificar avance al paso 4
-    await expect(this.page.getByText("Tus datos")).toBeVisible({ timeout: 5_000 })
+    // .first() — "Tus datos" aparece en el progress bar Y en el heading del paso 4
+    await expect(this.page.getByText("Tus datos").first()).toBeVisible({ timeout: 8_000 })
   }
 
   async llenarDatosPaciente(data: { nombre: string; telefono: string; email?: string }) {
@@ -57,7 +53,7 @@ export class BookingPublicoPage {
   }
 
   async expectExitoso() {
-    await expect(this.page.getByText("¡Cita agendada!")).toBeVisible({ timeout: 12_000 })
+    await expect(this.page.getByText("¡Cita agendada!")).toBeVisible({ timeout: 15_000 })
     await expect(this.page.getByRole("button", { name: /confirmar cita/i })).not.toBeVisible()
   }
 

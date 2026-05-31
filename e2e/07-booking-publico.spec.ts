@@ -3,6 +3,7 @@ import { TEST_SLUG, expectToast } from "./helpers"
 import { BookingPublicoPage } from "./pages/BookingPublicoPage"
 
 test.describe("Booking público — Flujo del paciente", () => {
+  test.setTimeout(90_000) // La API de disponibilidad puede tardar en producción
 
   test("página pública carga sin autenticación", async ({ page }) => {
     const booking = new BookingPublicoPage(page)

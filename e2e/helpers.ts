@@ -17,5 +17,6 @@ export async function loginAs(page: Page, email = TEST_USER.email, password = TE
 }
 
 export async function expectToast(page: Page) {
-  return page.locator("[data-sonner-toast]").or(page.getByRole("alert")).or(page.getByRole("status"))
+  // Usar solo data-sonner-toast para evitar match con el route-announcer de Next.js
+  return page.locator("[data-sonner-toast]").first()
 }
