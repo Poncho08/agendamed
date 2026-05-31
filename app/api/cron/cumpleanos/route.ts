@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     .not("fecha_nacimiento", "is", null)
     .is("eliminado_en", null)
 
-  const cumpleaneros = (pacientes ?? []).filter((p) => {
+  const cumpleaneros = (pacientes ?? []).filter((p: { fecha_nacimiento?: string | null; [key: string]: unknown }) => {
     if (!p.fecha_nacimiento) return false
     return (p.fecha_nacimiento as string).slice(5) === hoyMesDia
   })
