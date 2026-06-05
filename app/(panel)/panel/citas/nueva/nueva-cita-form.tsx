@@ -83,7 +83,7 @@ export function NuevaCitaForm({ consultorioId, pacientes, servicios }: Props) {
   }
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 16, alignItems: "start" }}>
+    <div className="col-split" style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 16, alignItems: "start" }}>
       {/* Columna izquierda */}
       <div className="stack">
         {/* Paciente */}
@@ -258,7 +258,7 @@ export function NuevaCitaForm({ consultorioId, pacientes, servicios }: Props) {
       </div>
 
       {/* Sticky summary */}
-      <div className="card" style={{ position: "sticky", top: "calc(var(--layout-topbar-h) + 24px)" }}>
+      <div className="card panel-aside" style={{ position: "sticky", top: "calc(var(--layout-topbar-h) + 24px)" }}>
         <div className="card__head"><div className="card__title">Resumen</div></div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
           <SummaryRow label="Paciente" value={paciente?.nombre ?? "—"} />

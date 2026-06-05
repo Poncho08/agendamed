@@ -51,6 +51,7 @@ export default function RegisterPage() {
       </div>
 
       <main
+        className="col-split"
         style={{
           display: "grid",
           gridTemplateColumns: "1fr 400px",

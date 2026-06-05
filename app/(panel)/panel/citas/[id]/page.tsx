@@ -62,7 +62,7 @@ export default async function CitaDetallePage({ params }: { params: { id: string
         </div>
       </header>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 260px", gap: 16 }}>
+      <div className="col-split" style={{ display: "grid", gridTemplateColumns: "1fr 260px", gap: 16 }}>
         {/* Principal */}
         <div className="stack">
           <div className="card">

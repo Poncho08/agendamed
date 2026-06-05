@@ -68,7 +68,7 @@ export default async function PatientProfilePage({ params }: { params: { id: str
         </div>
       </header>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 280px", gap: 16 }}>
+      <div className="col-split" style={{ display: "grid", gridTemplateColumns: "1fr 280px", gap: 16 }}>
         {/* Citas */}
         <div className="stack">
           <div className="card">

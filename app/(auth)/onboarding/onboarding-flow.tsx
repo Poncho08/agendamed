@@ -209,7 +209,7 @@ export function OnboardingFlow() {
       </header>
 
       {/* Body */}
-      <main style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 340px", gap: 0, maxWidth: 1000, margin: "0 auto", padding: "40px 24px", width: "100%" }}>
+      <main className="col-split" style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 340px", gap: 0, maxWidth: 1000, margin: "0 auto", padding: "40px 24px", width: "100%" }}>
         <div style={{ paddingRight: 40 }}>
           <span style={{ fontSize: "var(--fs-xs)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--c-text-faint)" }}>
             Paso {paso} de {PASOS.length}
@@ -344,7 +344,7 @@ export function OnboardingFlow() {
 
               <div className="card" style={{ marginBottom: 12 }}>
                 <div style={{ fontSize: "var(--fs-sm)", fontWeight: 600, marginBottom: 12 }}>Agregar un servicio</div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 120px 100px auto", gap: 10, alignItems: "end" }}>
+                <div className="col-formrow" style={{ display: "grid", gridTemplateColumns: "1fr 120px 100px auto", gap: 10, alignItems: "end" }}>
                   <div className="field">
                     <label className="field__label">Nombre</label>
                     <input

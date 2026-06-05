@@ -386,7 +386,7 @@ img, svg { display: block; max-width: 100%; }
    ============================================================ */
 .topbar {
   display: grid;
-  grid-template-columns: 1fr auto auto;
+  grid-template-columns: 1fr auto;
   align-items: center;
   gap: 12px;
   padding: 0 24px;
@@ -806,3 +806,113 @@ img, svg { display: block; max-width: 100%; }
 }
 .link { color: var(--c-brand-fg); text-decoration: underline; text-underline-offset: 2px; }
 .link:hover { color: var(--c-brand); }
+
+/* ============================================================
+   Hamburger (mobile nav toggle) — oculto en escritorio
+   ============================================================ */
+.topbar__hamburger {
+  display: none;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: var(--r-sm);
+  color: var(--c-text);
+  flex-shrink: 0;
+}
+.topbar__hamburger:hover { background: var(--c-surface-2); }
+
+.nav-backdrop {
+  display: none;
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* ============================================================
+   RESPONSIVE — Móvil (≤768px)
+   El panel del médico pasa de sidebar fijo a drawer deslizable.
+   Los grids de 2 columnas colapsan a 1 columna.
+   ============================================================ */
+@media (max-width: 768px) {
+  /* --- Shell: una sola columna --- */
+  .app-shell,
+  .app-shell.sidebar-collapsed {
+    grid-template-columns: 1fr;
+  }
+
+  /* --- Sidebar como drawer off-canvas --- */
+  .sidebar,
+  .sidebar.collapsed {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 264px;
+    height: 100vh;
+    transform: translateX(-100%);
+    transition: transform var(--t-base);
+    box-shadow: var(--sh-lg);
+    z-index: 60;
+  }
+  html.nav-open .sidebar { transform: translateX(0); }
+
+  /* En el drawer siempre mostramos labels completos */
+  .sidebar.collapsed .nav-item__label,
+  .sidebar.collapsed .sidebar__logo-name { display: inline; }
+
+  /* Ocultar el botón interno de colapsar (no aplica en móvil) */
+  .sidebar__user .iconbtn { display: none; }
+
+  /* Backdrop visible cuando el drawer está abierto */
+  html.nav-open .nav-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: var(--c-overlay);
+    backdrop-filter: blur(1px);
+    z-index: 50;
+    animation: fadeIn 0.2s ease;
+  }
+
+  /* --- Topbar: hamburguesa visible, búsqueda compacta --- */
+  .topbar {
+    grid-template-columns: auto 1fr auto;
+    padding: 0 12px;
+    gap: 8px;
+  }
+  .topbar__hamburger { display: grid; }
+  .topbar__search { display: none; }
+  .topbar__date-chip {
+    font-size: var(--fs-xs);
+    padding: 4px 8px;
+  }
+
+  /* --- Página: padding compacto, header apilado --- */
+  .page { padding: 16px 14px 56px; }
+  .page__head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .page__title { font-size: var(--fs-xl); }
+  .page__actions { width: 100%; }
+  .page__actions .btn { flex: 1; justify-content: center; }
+
+  /* --- Grids de 2 columnas → 1 columna --- */
+  .col-split { grid-template-columns: 1fr !important; }
+  .col-metrics { grid-template-columns: repeat(2, 1fr) !important; }
+  .col-cards { grid-template-columns: 1fr !important; }
+  .col-formrow { grid-template-columns: 1fr !important; }
+
+  /* Las asides sticky no se pegan en móvil (quedarían sobre el contenido) */
+  .col-split > .panel-aside { position: static !important; }
+
+  /* Tablas con scroll horizontal en lugar de romper el layout */
+  .data-table { display: block; overflow-x: auto; white-space: nowrap; }
+
+  /* Modales ocupan casi todo el ancho */
+  .modal { min-width: 0; width: 94vw; padding: 20px; }
+}
+
+/* Pantallas muy pequeñas (≤400px): métricas a 1 columna */
+@media (max-width: 400px) {
+  .col-metrics { grid-template-columns: 1fr !important; }
+}

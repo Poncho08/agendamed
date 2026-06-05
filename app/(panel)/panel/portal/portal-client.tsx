@@ -54,7 +54,7 @@ export function PortalClient({ bookingUrl, consultorio }: Props) {
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(bookingUrl)}`
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 220px", gap: 16, alignItems: "start" }}>
+    <div className="col-split" style={{ display: "grid", gridTemplateColumns: "1fr 220px", gap: 16, alignItems: "start" }}>
       {/* Columna principal */}
       <div className="stack">
         {/* URL card */}

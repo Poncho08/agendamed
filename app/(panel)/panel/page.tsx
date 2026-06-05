@@ -98,7 +98,7 @@ export default async function DashboardPage() {
       </header>
 
       {/* Métricas */}
-      <div className="grid-3" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
+      <div className="grid-3 col-metrics" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
         <MetricCard
           label="Citas hoy"
           value={citasHoy?.length ?? 0}
@@ -129,7 +129,7 @@ export default async function DashboardPage() {
         />
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 16 }}>
+      <div className="col-split" style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 16 }}>
         {/* Agenda del día */}
         <div className="card">
           <div className="card__head">

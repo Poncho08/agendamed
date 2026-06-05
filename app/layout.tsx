@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Toaster } from "sonner"
 import "./globals.css"
 
@@ -9,6 +9,12 @@ export const metadata: Metadata = {
   },
   description: "El sistema de gestión para tu consultorio médico",
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
+}
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
 }
 
 export default function RootLayout({

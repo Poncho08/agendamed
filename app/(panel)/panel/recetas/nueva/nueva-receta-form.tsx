@@ -121,7 +121,7 @@ export function NuevaRecetaForm({ consultorio, pacientes, plantillas }: Props) {
   const hoy = format(new Date(), "d 'de' MMMM 'de' yyyy", { locale: es })
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 16, alignItems: "start" }}>
+    <div className="col-split" style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 16, alignItems: "start" }}>
       {/* Columna izquierda: formulario */}
       <div className="stack">
         {/* Paciente y plantilla */}
@@ -293,7 +293,7 @@ export function NuevaRecetaForm({ consultorio, pacientes, plantillas }: Props) {
       </div>
 
       {/* Vista previa PDF */}
-      <div style={{ position: "sticky", top: "calc(var(--layout-topbar-h) + 24px)" }}>
+      <div className="panel-aside" style={{ position: "sticky", top: "calc(var(--layout-topbar-h) + 24px)" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
           <span className="muted" style={{ fontSize: "var(--fs-xs)" }}>Vista previa del PDF</span>
         </div>

@@ -59,7 +59,7 @@ export default function PlanesPage({
           </p>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, maxWidth: 720, margin: "0 auto 60px" }}>
+        <div className="col-cards" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, maxWidth: 720, margin: "0 auto 60px" }}>
           {/* Plan Base */}
           <PlanCard
             nombre="Plan Base"
@@ -103,7 +103,7 @@ export default function PlanesPage({
         </div>
 
         {/* Garantías */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20, marginBottom: 60 }}>
+        <div className="col-cards" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20, marginBottom: 60 }}>
           {[
             { icon: "🔒", title: "Sin tarjeta de crédito", desc: "Empieza tu prueba en menos de 2 minutos. Cancela cuando quieras." },
             { icon: "📞", title: "Soporte en español", desc: "Equipo en México, atención de lunes a sábado." },
@@ -124,7 +124,7 @@ export default function PlanesPage({
           <h3 style={{ fontSize: "var(--fs-lg)", fontWeight: "var(--fw-semibold)", marginBottom: 24, textAlign: "center" }}>
             Preguntas frecuentes
           </h3>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+          <div className="col-cards" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
             {[
               { q: "¿Cómo funciona la prueba gratuita?", a: "Recibes acceso completo al Plan Pro por 14 días. Al terminar, eliges Base o Pro. No te cobramos automáticamente." },
               { q: "¿Acepto pacientes nuevos en la prueba?", a: "Sí. Puedes invitar pacientes, agendar citas, enviar recetas y todo lo demás. Tus datos quedan guardados al pasar a plan pagado." },

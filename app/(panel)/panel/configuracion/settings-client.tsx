@@ -114,7 +114,7 @@ export function SettingsClient({ consultorio, servicios: serviciosIniciales, hor
   }
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "220px 1fr", gap: 16, alignItems: "start" }}>
+    <div className="col-split" style={{ display: "grid", gridTemplateColumns: "220px 1fr", gap: 16, alignItems: "start" }}>
       {/* Sidebar nav */}
       <div className="card" style={{ padding: "8px 0" }}>
         <nav>
@@ -273,7 +273,7 @@ export function SettingsClient({ consultorio, servicios: serviciosIniciales, hor
               </div>
 
               {mostrarNuevoSvc && (
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 110px 110px auto", gap: 10, alignItems: "end", marginBottom: 16, padding: "14px", background: "var(--c-surface-2)", borderRadius: "var(--r-md)" }}>
+                <div className="col-formrow" style={{ display: "grid", gridTemplateColumns: "1fr 110px 110px auto", gap: 10, alignItems: "end", marginBottom: 16, padding: "14px", background: "var(--c-surface-2)", borderRadius: "var(--r-md)" }}>
                   <div className="field">
                     <label className="field__label">Nombre del servicio</label>
                     <input className="input" placeholder="Consulta general" value={nuevoSvc.nombre}
