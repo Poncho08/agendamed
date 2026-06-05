@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { Search, Menu } from "lucide-react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
@@ -9,6 +9,7 @@ import { es } from "date-fns/locale"
 export function Topbar() {
   const hoy = format(new Date(), "EEE d MMM yyyy", { locale: es })
   const pathname = usePathname()
+  const router = useRouter()
   const [navOpen, setNavOpen] = useState(false)
 
   // Sincroniza el estado con la clase del <html> que controla el drawer en CSS
@@ -33,23 +34,12 @@ export function Topbar() {
         </button>
 
         <div>
-          <button className="topbar__search">
+          <button
+            className="topbar__search"
+            onClick={() => router.push("/panel/pacientes")}
+          >
             <Search size={14} />
-            <span>Buscar pacientes, citas…</span>
-            <kbd
-              style={{
-                marginLeft: "auto",
-                background: "var(--c-surface-3)",
-                border: "1px solid var(--c-border)",
-                borderRadius: 4,
-                padding: "1px 5px",
-                fontSize: 11,
-                fontFamily: "var(--font-mono)",
-                color: "var(--c-text-faint)",
-              }}
-            >
-              ⌘K
-            </kbd>
+            <span>Buscar pacientes…</span>
           </button>
         </div>
 

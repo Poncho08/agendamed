@@ -117,8 +117,8 @@ export function RegisterForm() {
       return
     }
 
-    toast.success("Cuenta creada", {
-      description: "Te enviamos un correo de verificación.",
+    toast.success("¡Bienvenido a AgendaMed!", {
+      description: "Vamos a configurar tu consultorio.",
     })
     router.push("/onboarding")
   }
