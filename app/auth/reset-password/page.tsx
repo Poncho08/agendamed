@@ -36,14 +36,15 @@ export default function ResetPasswordPage() {
     const { error } = await supabase.auth.updateUser({ password })
 
     if (error) {
-      toast.error("Error al actualizar la contraseña. El enlace puede haber expirado.")
-      setLoading(false)
+      toast.error("El enlace expiró o no es válido. Solicita uno nuevo desde el login.")
+      setTimeout(() => router.push("/login"), 1500)
       return
     }
 
     setListo(true)
     toast.success("Contraseña actualizada correctamente")
-    setTimeout(() => router.push("/panel"), 2000)
+    await supabase.auth.signOut()
+    setTimeout(() => router.push("/login"), 2000)
   }
 
   if (listo) {
@@ -52,7 +53,7 @@ export default function ResetPasswordPage() {
         <div style={{ textAlign: "center", padding: 32 }}>
           <div style={{ fontSize: 40, marginBottom: 16 }}>✅</div>
           <h2 style={{ fontWeight: 600, marginBottom: 8 }}>Contraseña actualizada</h2>
-          <p className="muted" style={{ fontSize: "var(--fs-sm)" }}>Redirigiendo al panel…</p>
+          <p className="muted" style={{ fontSize: "var(--fs-sm)" }}>Inicia sesión con tu nueva contraseña…</p>
         </div>
       </div>
     )

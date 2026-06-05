@@ -1,93 +1,69 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createServiceClient } from "@/lib/supabase/server"
-import { sendWhatsApp, msgRecordatorio24h, msgRecordatorio2h } from "@/lib/twilio"
+import { sendWhatsApp, msgRecordatorio24h } from "@/lib/twilio"
 import { sendRecordatorioCita } from "@/lib/resend"
-import { formatInTimeZone } from "date-fns-tz"
-import { addHours, parseISO } from "date-fns"
+import { formatInTimeZone, toZonedTime, fromZonedTime } from "date-fns-tz"
+import { addDays, parseISO } from "date-fns"
 import { es } from "date-fns/locale"
 
 const TZ = "America/Mexico_City"
 
-// Vercel invoca esta ruta según el cron definido en vercel.json
-// También se puede llamar manualmente con el header x-cron-secret
+// Recordatorios — OPCIÓN A: una vez al día (cron diario del plan Hobby).
+// Cada mañana envía recordatorio por EMAIL a TODAS las citas del día siguiente.
+// WhatsApp se intenta solo si el paciente dio consentimiento (cuando esté activo).
 export async function GET(request: NextRequest) {
-  const secret = request.headers.get("x-cron-secret")
-  if (
-    process.env.NODE_ENV === "production" &&
-    secret !== process.env.CRON_SECRET
-  ) {
+  // Vercel Cron manda "Authorization: Bearer <CRON_SECRET>".
+  // También aceptamos "x-cron-secret" para pruebas manuales.
+  const auth = request.headers.get("authorization")
+  const xSecret = request.headers.get("x-cron-secret")
+  const secret = process.env.CRON_SECRET
+  const autorizado =
+    process.env.NODE_ENV !== "production" ||
+    auth === `Bearer ${secret}` ||
+    xSecret === secret
+  if (!autorizado) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
   const supabase = createServiceClient()
-  const ahora = new Date()
-  const en24h = addHours(ahora, 24)
-  const en26h = addHours(ahora, 26)
-  const en2h = addHours(ahora, 2)
-  const en3h = addHours(ahora, 3)
 
-  let enviados = 0
-  let errores = 0
+  // Calcular el día de MAÑANA en horario de México y convertirlo a UTC
+  const nowMX = toZonedTime(new Date(), TZ)
+  const mananaMX = addDays(nowMX, 1)
+  const y = mananaMX.getFullYear()
+  const m = String(mananaMX.getMonth() + 1).padStart(2, "0")
+  const d = String(mananaMX.getDate()).padStart(2, "0")
+  const fechaManana = `${y}-${m}-${d}`
+  const inicioDia = fromZonedTime(`${fechaManana}T00:00:00`, TZ).toISOString()
+  const finDia = fromZonedTime(`${fechaManana}T23:59:59`, TZ).toISOString()
 
-  // ─── Recordatorios 24h ────────────────────────────────────────────
-  const { data: citas24h } = await supabase
+  const { data: citas } = await supabase
     .from("citas")
     .select(`
-      id, inicio, fin,
+      id, inicio, consultorio_id, paciente_id, cancelacion_token,
       paciente:pacientes(nombre, telefono, email, consentimiento_whatsapp),
       servicio:servicios(nombre),
-      consultorio:consultorios(medico_nombre, nombre, recordatorio_24h_enviado)
+      consultorio:consultorios(medico_nombre, nombre)
     `)
-    .gte("inicio", en24h.toISOString())
-    .lte("inicio", en26h.toISOString())
+    .gte("inicio", inicioDia)
+    .lte("inicio", finDia)
     .in("estado", ["pendiente", "confirmada"])
 
-  for (const cita of citas24h ?? []) {
+  let emailsEnviados = 0
+  let whatsappEnviados = 0
+  let errores = 0
+
+  for (const cita of citas ?? []) {
     const pac = cita.paciente as any
     const svc = cita.servicio as any
     const cons = cita.consultorio as any
     if (!pac || !cons) continue
 
-    const fechaStr = formatInTimeZone(parseISO(cita.inicio), TZ, "d 'de' MMMM yyyy", { locale: es })
+    const fechaStr = formatInTimeZone(parseISO(cita.inicio), TZ, "EEEE d 'de' MMMM", { locale: es })
     const horaStr = formatInTimeZone(parseISO(cita.inicio), TZ, "HH:mm")
-    const cancelUrl = `${process.env.NEXT_PUBLIC_APP_URL}/cancelar/${(cita as any).cancelacion_token ?? ""}`
+    const cancelUrl = `${process.env.NEXT_PUBLIC_APP_URL}/cancelar/${cita.cancelacion_token ?? ""}`
 
-    // WhatsApp
-    if (pac.consentimiento_whatsapp && pac.telefono) {
-      try {
-        const sid = await sendWhatsApp(pac.telefono, msgRecordatorio24h({
-          pacienteNombre: pac.nombre,
-          medicoNombre: cons.medico_nombre,
-          fecha: fechaStr,
-          hora: horaStr,
-          servicio: svc?.nombre ?? "Consulta",
-          cancelUrl,
-        }))
-        await supabase.from("mensajes_log").insert({
-          consultorio_id: (cita as any).consultorio_id,
-          paciente_id: (cita as any).paciente_id,
-          cita_id: cita.id,
-          tipo: "recordatorio_24h",
-          canal: "whatsapp",
-          estado: "enviado",
-          proveedor_id: sid,
-        })
-        enviados++
-      } catch (e: any) {
-        await supabase.from("mensajes_log").insert({
-          consultorio_id: (cita as any).consultorio_id,
-          paciente_id: (cita as any).paciente_id,
-          cita_id: cita.id,
-          tipo: "recordatorio_24h",
-          canal: "whatsapp",
-          estado: "fallido",
-          error: e.message,
-        })
-        errores++
-      }
-    }
-
-    // Email
+    // EMAIL (canal principal)
     if (pac.email) {
       try {
         await sendRecordatorioCita({
@@ -99,57 +75,63 @@ export async function GET(request: NextRequest) {
           cancelUrl,
           tipo: "24h",
         })
-        enviados++
+        await supabase.from("mensajes_log").insert({
+          consultorio_id: cita.consultorio_id,
+          paciente_id: cita.paciente_id,
+          cita_id: cita.id,
+          tipo: "recordatorio_dia_anterior",
+          canal: "email",
+          estado: "enviado",
+        })
+        emailsEnviados++
+      } catch (e: any) {
+        await supabase.from("mensajes_log").insert({
+          consultorio_id: cita.consultorio_id,
+          paciente_id: cita.paciente_id,
+          cita_id: cita.id,
+          tipo: "recordatorio_dia_anterior",
+          canal: "email",
+          estado: "fallido",
+          error: e.message,
+        })
+        errores++
+      }
+    }
+
+    // WhatsApp (secundario — solo si hay consentimiento y número)
+    if (pac.consentimiento_whatsapp && pac.telefono) {
+      try {
+        const sid = await sendWhatsApp(pac.telefono, msgRecordatorio24h({
+          pacienteNombre: pac.nombre,
+          medicoNombre: cons.medico_nombre,
+          fecha: fechaStr,
+          hora: horaStr,
+          servicio: svc?.nombre ?? "Consulta",
+          cancelUrl,
+        }))
+        await supabase.from("mensajes_log").insert({
+          consultorio_id: cita.consultorio_id,
+          paciente_id: cita.paciente_id,
+          cita_id: cita.id,
+          tipo: "recordatorio_dia_anterior",
+          canal: "whatsapp",
+          estado: "enviado",
+          proveedor_id: sid,
+        })
+        whatsappEnviados++
       } catch {
+        // WhatsApp aún en sandbox — fallo no bloquea el email
         errores++
       }
     }
   }
 
-  // ─── Recordatorios 2h ────────────────────────────────────────────
-  const { data: citas2h } = await supabase
-    .from("citas")
-    .select(`
-      id, inicio,
-      paciente:pacientes(nombre, telefono, consentimiento_whatsapp),
-      consultorio:consultorios(medico_nombre)
-    `)
-    .gte("inicio", en2h.toISOString())
-    .lte("inicio", en3h.toISOString())
-    .in("estado", ["pendiente", "confirmada"])
-
-  for (const cita of citas2h ?? []) {
-    const pac = cita.paciente as any
-    const cons = cita.consultorio as any
-    if (!pac?.consentimiento_whatsapp || !pac.telefono || !cons) continue
-
-    const horaStr = formatInTimeZone(parseISO(cita.inicio), TZ, "HH:mm")
-    try {
-      const sid = await sendWhatsApp(pac.telefono, msgRecordatorio2h({
-        pacienteNombre: pac.nombre,
-        medicoNombre: cons.medico_nombre,
-        hora: horaStr,
-      }))
-      await supabase.from("mensajes_log").insert({
-        consultorio_id: (cita as any).consultorio_id,
-        paciente_id: (cita as any).paciente_id,
-        cita_id: cita.id,
-        tipo: "recordatorio_2h",
-        canal: "whatsapp",
-        estado: "enviado",
-        proveedor_id: sid,
-      })
-      enviados++
-    } catch (e: any) {
-      errores++
-    }
-  }
-
   return NextResponse.json({
     ok: true,
-    enviados,
+    fecha_recordada: fechaManana,
+    citas_encontradas: citas?.length ?? 0,
+    emails_enviados: emailsEnviados,
+    whatsapp_enviados: whatsappEnviados,
     errores,
-    procesados_24h: citas24h?.length ?? 0,
-    procesados_2h: citas2h?.length ?? 0,
   })
 }

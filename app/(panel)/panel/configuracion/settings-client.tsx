@@ -323,10 +323,8 @@ export function SettingsClient({ consultorio, servicios: serviciosIniciales, hor
               </div>
               <ul>
                 {[
-                  { key: "recordatorio_24h", label: "Recordatorio 24h antes", desc: "WhatsApp · plantilla \"rec_24h_es\"" },
-                  { key: "recordatorio_2h", label: "Recordatorio 2h antes", desc: "WhatsApp · permite cancelar" },
-                  { key: "cumpleanos", label: "Felicitación de cumpleaños", desc: "Enviar el día — 9:00 hrs" },
-                  { key: "encuesta_post_consulta", label: "Encuesta post-consulta", desc: "Email · 1 hora después" },
+                  { key: "recordatorio_24h", label: "Recordatorio el día anterior", desc: "Email · cada mañana a las 8:00" },
+                  { key: "cumpleanos", label: "Felicitación de cumpleaños", desc: "Email · el día del cumpleaños" },
                 ].map((item, i, arr) => (
                   <li
                     key={item.key}

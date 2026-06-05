@@ -434,9 +434,8 @@ export function OnboardingFlow() {
                   Configurarás los detalles desde Configuración una vez dentro del panel. Por ahora activamos los recordatorios predeterminados.
                 </p>
                 {[
-                  { label: "Recordatorio 24h antes", desc: "WhatsApp · plantilla estándar", on: true },
-                  { label: "Recordatorio 2h antes", desc: "WhatsApp · permite cancelar", on: true },
-                  { label: "Felicitación de cumpleaños", desc: "Enviar el día · 9:00 hrs", on: true },
+                  { label: "Recordatorio el día anterior", desc: "Email · cada mañana a las 8:00", on: true },
+                  { label: "Felicitación de cumpleaños", desc: "Email · el día del cumpleaños", on: true },
                 ].map((item) => (
                   <div key={item.label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid var(--c-border-faint)" }}>
                     <div>

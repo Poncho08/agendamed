@@ -109,10 +109,16 @@ export function RegisterForm() {
     })
 
     if (consError) {
-      // Limpiar el usuario de Auth para no dejarlo huérfano
-      await supabase.auth.admin?.deleteUser?.(authData.user.id).catch(() => {})
+      // Rollback: borrar el usuario de Auth huérfano vía endpoint del servidor
+      // (auth.admin no existe en el cliente — requiere la service-role key).
+      // Así el médico puede volver a registrarse con el mismo email.
+      await fetch("/api/auth/rollback-registro", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: authData.user.id }),
+      }).catch(() => {})
       await supabase.auth.signOut()
-      toast.error("Error al crear el consultorio. Intenta de nuevo en unos segundos.")
+      toast.error("Error al crear el consultorio. Por favor intenta de nuevo.")
       setLoading(false)
       return
     }

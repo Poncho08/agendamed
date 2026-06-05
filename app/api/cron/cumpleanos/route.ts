@@ -6,11 +6,16 @@ import { format } from "date-fns"
 
 // Ejecutar diariamente a las 09:00 México (15:00 UTC)
 export async function GET(request: NextRequest) {
-  const secret = request.headers.get("x-cron-secret")
-  if (
-    process.env.NODE_ENV === "production" &&
-    secret !== process.env.CRON_SECRET
-  ) {
+  // Vercel Cron manda "Authorization: Bearer <CRON_SECRET>".
+  // También aceptamos "x-cron-secret" para pruebas manuales.
+  const auth = request.headers.get("authorization")
+  const xSecret = request.headers.get("x-cron-secret")
+  const secret = process.env.CRON_SECRET
+  const autorizado =
+    process.env.NODE_ENV !== "production" ||
+    auth === `Bearer ${secret}` ||
+    xSecret === secret
+  if (!autorizado) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
