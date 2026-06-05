@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
+import { slugify } from "@/lib/utils"
 import { PortalClient } from "./portal-client"
 
 export default async function PortalPage() {
@@ -15,10 +16,34 @@ export default async function PortalPage() {
 
   if (!consultorio) redirect("/onboarding")
 
+  // Auto-heal: si el consultorio no tiene slug, lo generamos automáticamente
+  // a partir del nombre del consultorio (o del médico como respaldo) y lo
+  // guardamos. El slug nunca se edita manualmente — solo se genera una vez.
+  let slug = consultorio.slug
+  if (!slug) {
+    const base = slugify(consultorio.nombre || consultorio.medico_nombre || "consultorio")
+    slug = base || "consultorio"
+    // Garantizar unicidad
+    let intento = 0
+    while (intento < 20) {
+      const candidato = intento === 0 ? base : `${base}-${intento}`
+      const { data: existente } = await supabase
+        .from("consultorios")
+        .select("id")
+        .eq("slug", candidato)
+        .neq("id", consultorio.id)
+        .maybeSingle()
+      if (!existente) {
+        slug = candidato
+        break
+      }
+      intento++
+    }
+    await supabase.from("consultorios").update({ slug }).eq("id", consultorio.id)
+  }
+
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
-  const bookingUrl = consultorio.slug
-    ? `${appUrl}/agendar/${consultorio.slug}`
-    : null
+  const bookingUrl = `${appUrl}/agendar/${slug}`
 
   return (
     <div className="stack">
@@ -36,7 +61,7 @@ export default async function PortalPage() {
           nombre: consultorio.nombre,
           medico_nombre: consultorio.medico_nombre,
           especialidad: consultorio.especialidad,
-          slug: consultorio.slug,
+          slug,
           direccion: consultorio.direccion,
           ciudad: consultorio.ciudad,
           telefono: consultorio.telefono,

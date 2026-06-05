@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { toast } from "sonner"
-import { Copy, Check, ExternalLink, MessageCircle, Share2, QrCode } from "lucide-react"
+import { Copy, Check, ExternalLink, MessageCircle, Share2, QrCode, Lock } from "lucide-react"
 
 interface Props {
   bookingUrl: string | null
@@ -100,6 +100,11 @@ export function PortalClient({ bookingUrl, consultorio }: Props) {
             <a href={bookingUrl} target="_blank" rel="noopener noreferrer" className="btn btn-secondary">
               <ExternalLink size={14} /> Ver página
             </a>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 14, color: "var(--c-text-faint)", fontSize: "var(--fs-xs)" }}>
+            <Lock size={12} />
+            <span>Este enlace se genera automáticamente desde el nombre de tu consultorio y no se puede modificar.</span>
           </div>
         </div>
 
