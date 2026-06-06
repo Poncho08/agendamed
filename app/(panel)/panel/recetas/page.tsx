@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { fmtDate } from "@/lib/utils"
+import { WhatsAppButton } from "@/components/ui/whatsapp-button"
+import { plantillas } from "@/lib/whatsapp-links"
 
 export default async function RecetasPage() {
   const supabase = await createClient()
@@ -10,14 +12,16 @@ export default async function RecetasPage() {
 
   const { data: consultorio } = await supabase
     .from("consultorios")
-    .select("id")
+    .select("id, medico_nombre")
     .eq("user_id", user.id)
     .single()
   if (!consultorio) redirect("/onboarding")
 
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
+
   const { data: recetas, count } = await supabase
     .from("recetas")
-    .select("*, paciente:pacientes(nombre)", { count: "exact" })
+    .select("*, paciente:pacientes(nombre, telefono)", { count: "exact" })
     .eq("consultorio_id", consultorio.id)
     .order("created_at", { ascending: false })
     .limit(50)
@@ -67,7 +71,8 @@ export default async function RecetasPage() {
             ) : (
               recetas.map((rx) => {
                 const meds = Array.isArray(rx.medicamentos) ? rx.medicamentos.length : 0
-                const pac = rx.paciente as { nombre: string } | null
+                const pac = rx.paciente as { nombre: string; telefono: string | null } | null
+                const pdfUrl = `${appUrl}/api/pdf/receta/${rx.id}`
                 return (
                   <tr key={rx.id}>
                     <td>
@@ -87,10 +92,18 @@ export default async function RecetasPage() {
                     <td style={{ fontSize: "var(--fs-sm)" }}>{rx.diagnostico}</td>
                     <td style={{ textAlign: "right", fontFamily: "var(--font-mono)", fontSize: "var(--fs-sm)" }}>{meds}</td>
                     <td>
-                      <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+                      <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", alignItems: "center", flexWrap: "wrap" }}>
                         <Link href={`/api/pdf/receta/${rx.id}`} className="btn btn-ghost btn-sm" target="_blank">
                           Ver PDF
                         </Link>
+                        {pac?.telefono && (
+                          <WhatsAppButton
+                            telefono={pac.telefono}
+                            texto="Enviar por WhatsApp"
+                            size="sm"
+                            mensaje={plantillas.receta({ paciente: pac.nombre, doctor: consultorio.medico_nombre, linkPdf: pdfUrl, folio: rx.folio })}
+                          />
+                        )}
                         {rx.enviada_wa && (
                           <span className="badge badge-success" style={{ fontSize: 10 }}>WA ✓</span>
                         )}

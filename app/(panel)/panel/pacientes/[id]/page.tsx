@@ -2,6 +2,9 @@ import { createClient } from "@/lib/supabase/server"
 import { redirect, notFound } from "next/navigation"
 import Link from "next/link"
 import { fmtDate, fmtEdad, fmtTime } from "@/lib/utils"
+import { WhatsAppButton } from "@/components/ui/whatsapp-button"
+import { plantillas } from "@/lib/whatsapp-links"
+import { format } from "date-fns"
 import type { CitaEstado } from "@/types/database"
 
 const ESTADO_BADGE: Record<CitaEstado, string> = {
@@ -18,7 +21,7 @@ export default async function PatientProfilePage({ params }: { params: { id: str
   if (!user) redirect("/login")
 
   const { data: consultorio } = await supabase
-    .from("consultorios").select("id").eq("user_id", user.id).single()
+    .from("consultorios").select("id, slug, nombre, medico_nombre").eq("user_id", user.id).single()
   if (!consultorio) redirect("/onboarding")
 
   const { data: paciente } = await supabase
@@ -30,6 +33,12 @@ export default async function PatientProfilePage({ params }: { params: { id: str
     .single()
 
   if (!paciente) notFound()
+
+  // ¿Hoy es su cumpleaños?
+  const esCumpleHoy = !!paciente.fecha_nacimiento &&
+    (paciente.fecha_nacimiento as string).slice(5) === format(new Date(), "MM-dd")
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
+  const urlPublica = consultorio.slug ? `${appUrl}/agendar/${consultorio.slug}` : appUrl
 
   const [{ data: citas }, { data: recetas }] = await Promise.all([
     supabase
@@ -134,8 +143,39 @@ export default async function PatientProfilePage({ params }: { params: { id: str
           )}
         </div>
 
-        {/* Sidebar datos */}
-        <div className="card" style={{ height: "fit-content" }}>
+        {/* Columna derecha */}
+        <div className="stack" style={{ height: "fit-content" }}>
+          {/* Acciones rápidas — solo si el paciente tiene teléfono */}
+          {paciente.telefono && (
+            <div className="card">
+              <div className="card__head"><div className="card__title">Acciones rápidas</div></div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <WhatsAppButton
+                  telefono={paciente.telefono}
+                  texto="Invitar a agendar"
+                  size="sm"
+                  mensaje={plantillas.invitarAgendar({ paciente: paciente.nombre, urlPublica })}
+                />
+                <WhatsAppButton
+                  telefono={paciente.telefono}
+                  texto="Mensaje libre"
+                  size="sm"
+                  mensaje={plantillas.libre({ paciente: paciente.nombre })}
+                />
+                {esCumpleHoy && (
+                  <WhatsAppButton
+                    telefono={paciente.telefono}
+                    texto="Felicitar 🎂"
+                    size="sm"
+                    mensaje={plantillas.cumpleanos({ paciente: paciente.nombre, consultorio: consultorio.nombre })}
+                  />
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Datos del paciente */}
+          <div className="card">
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
               <div className="avatar" style={{ width: 44, height: 44, background: "var(--c-brand)", fontSize: 14 }}>
@@ -176,6 +216,7 @@ export default async function PatientProfilePage({ params }: { params: { id: str
                 </div>
               </>
             )}
+          </div>
           </div>
         </div>
       </div>

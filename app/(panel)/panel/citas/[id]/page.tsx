@@ -3,7 +3,13 @@ import { redirect, notFound } from "next/navigation"
 import Link from "next/link"
 import { fmtDate, fmtTime } from "@/lib/utils"
 import { CitaActions } from "./cita-actions"
+import { WhatsAppButton } from "@/components/ui/whatsapp-button"
+import { plantillas } from "@/lib/whatsapp-links"
+import { formatInTimeZone } from "date-fns-tz"
+import { es } from "date-fns/locale"
 import type { CitaEstado } from "@/types/database"
+
+const TZ = "America/Mexico_City"
 
 const ESTADO_LABEL: Record<CitaEstado, string> = {
   pendiente: "Pendiente",
@@ -27,7 +33,7 @@ export default async function CitaDetallePage({ params }: { params: { id: string
   if (!user) redirect("/login")
 
   const { data: consultorio } = await supabase
-    .from("consultorios").select("id").eq("user_id", user.id).single()
+    .from("consultorios").select("id, medico_nombre").eq("user_id", user.id).single()
   if (!consultorio) redirect("/onboarding")
 
   const { data: cita } = await supabase
@@ -42,6 +48,10 @@ export default async function CitaDetallePage({ params }: { params: { id: string
   const pac = cita.paciente as { id: string; nombre: string; telefono: string | null; email: string | null; consentimiento_whatsapp: boolean } | null
   const svc = cita.servicio as { nombre: string; tipo: string } | null
   const estado = cita.estado as CitaEstado
+
+  // Datos para los mensajes de WhatsApp (hora de México)
+  const fechaMsg = formatInTimeZone(new Date(cita.inicio), TZ, "EEEE d 'de' MMMM", { locale: es })
+  const horaMsg = formatInTimeZone(new Date(cita.inicio), TZ, "HH:mm")
 
   return (
     <div className="stack" style={{ maxWidth: 720 }}>
@@ -94,6 +104,35 @@ export default async function CitaDetallePage({ params }: { params: { id: string
           </div>
 
           <CitaActions citaId={cita.id} estadoActual={estado} />
+
+          {/* Contactar por WhatsApp — solo si el paciente tiene teléfono */}
+          {pac?.telefono && (
+            <div className="card">
+              <div className="card__head"><div className="card__title">Contactar por WhatsApp</div></div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <WhatsAppButton
+                  telefono={pac.telefono}
+                  texto="Enviar recordatorio"
+                  size="sm"
+                  mensaje={plantillas.recordatorio({ paciente: pac.nombre, doctor: consultorio.medico_nombre, fecha: fechaMsg, hora: horaMsg })}
+                />
+                <WhatsAppButton
+                  telefono={pac.telefono}
+                  texto="Pedir confirmación"
+                  size="sm"
+                  mensaje={plantillas.confirmacion({ paciente: pac.nombre, doctor: consultorio.medico_nombre, fecha: fechaMsg, hora: horaMsg })}
+                />
+                {estado === "confirmada" && (
+                  <WhatsAppButton
+                    telefono={pac.telefono}
+                    texto="Avisar cancelación"
+                    size="sm"
+                    mensaje={plantillas.cancelacion({ paciente: pac.nombre, fecha: fechaMsg, hora: horaMsg })}
+                  />
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Datos del paciente */}

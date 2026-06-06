@@ -2,6 +2,7 @@ import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { Sidebar } from "@/components/sidebar"
 import { Topbar } from "@/components/topbar"
+import { InstallBanner } from "@/components/install-banner"
 
 export default async function PanelLayout({
   children,
@@ -37,9 +38,12 @@ export default async function PanelLayout({
     <div className="app-shell">
       <Sidebar consultorio={consultorio} />
       <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
-        <Topbar />
+        <Topbar medicoNombre={consultorio.medico_nombre} />
         <main className="main-content">
-          <div className="page">{children}</div>
+          <div className="page">
+            <InstallBanner />
+            {children}
+          </div>
         </main>
       </div>
     </div>

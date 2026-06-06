@@ -5,8 +5,9 @@ import { usePathname, useRouter } from "next/navigation"
 import { Search, Menu } from "lucide-react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
+import { AvatarMenu } from "@/components/avatar-menu"
 
-export function Topbar() {
+export function Topbar({ medicoNombre }: { medicoNombre: string }) {
   const hoy = format(new Date(), "EEE d MMM yyyy", { locale: es })
   const pathname = usePathname()
   const router = useRouter()
@@ -45,6 +46,7 @@ export function Topbar() {
 
         <div className="topbar__actions">
           <span className="topbar__date-chip">{hoy}</span>
+          <AvatarMenu medicoNombre={medicoNombre} />
         </div>
       </header>
 

@@ -807,6 +807,10 @@ img, svg { display: block; max-width: 100%; }
 .link { color: var(--c-brand-fg); text-decoration: underline; text-underline-offset: 2px; }
 .link:hover { color: var(--c-brand); }
 
+/* Quick action cards — hover lift */
+.quick-action { transition: transform var(--t-fast), box-shadow var(--t-fast), border-color var(--t-fast); }
+.quick-action:hover { transform: translateY(-2px); box-shadow: var(--sh-md); border-color: var(--c-brand-border); }
+
 /* ============================================================
    Hamburger (mobile nav toggle) — oculto en escritorio
    ============================================================ */

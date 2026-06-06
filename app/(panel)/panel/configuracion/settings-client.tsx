@@ -3,10 +3,11 @@
 import { useState } from "react"
 import { toast } from "sonner"
 import { createClient } from "@/lib/supabase/client"
-import { Building2, Clock, Pill, MessageSquare, Video, Download, FileText } from "lucide-react"
+import { Building2, Clock, Pill, MessageSquare, Video, Download, FileText, Trash2 } from "lucide-react"
 import type { Consultorio, Servicio, Horario, ConfiguracionMensajes } from "@/types/database"
 import { fmtMxn } from "@/lib/utils"
 import { getZoomAuthUrl } from "@/lib/zoom"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 
 const SECCIONES = [
   { id: "consultorio", label: "Consultorio", icon: Building2 },
@@ -80,6 +81,41 @@ export function SettingsClient({ consultorio, servicios: serviciosIniciales, hor
     const supabase = createClient()
     await supabase.from("servicios").update({ activo }).eq("id", id)
     setServiciosState((prev) => prev.map((s) => s.id === id ? { ...s, activo } : s))
+  }
+
+  // Estado y lógica para eliminar servicios permanentemente
+  const [svcAEliminar, setSvcAEliminar] = useState<{ id: string; nombre: string } | null>(null)
+  const [eliminando, setEliminando] = useState(false)
+
+  async function confirmarEliminarServicio() {
+    if (!svcAEliminar) return
+    setEliminando(true)
+    const supabase = createClient()
+
+    // 1. Verificar si tiene citas activas (estado != cancelada/completada)
+    const { count } = await supabase
+      .from("citas")
+      .select("id", { count: "exact", head: true })
+      .eq("servicio_id", svcAEliminar.id)
+      .not("estado", "in", "(cancelada,completada)")
+
+    if ((count ?? 0) > 0) {
+      toast.error("No puedes eliminar este servicio porque tiene citas activas")
+      setEliminando(false)
+      setSvcAEliminar(null)
+      return
+    }
+
+    // 2. Sin citas activas → eliminar
+    const { error } = await supabase.from("servicios").delete().eq("id", svcAEliminar.id)
+    if (error) {
+      toast.error("No se pudo eliminar el servicio. Intenta de nuevo.")
+    } else {
+      setServiciosState((prev) => prev.filter((s) => s.id !== svcAEliminar.id))
+      toast.success("Servicio eliminado correctamente")
+    }
+    setEliminando(false)
+    setSvcAEliminar(null)
   }
 
   async function guardarVentanaCancelacion() {
@@ -304,6 +340,14 @@ export function SettingsClient({ consultorio, servicios: serviciosIniciales, hor
                     <button className={`toggle ${s.activo ? "on" : ""}`} onClick={() => toggleServicio(s.id, !s.activo)}>
                       <div className="toggle__thumb" />
                     </button>
+                    <button
+                      className="iconbtn"
+                      onClick={() => setSvcAEliminar({ id: s.id, nombre: s.nombre })}
+                      style={{ color: "var(--c-danger-fg)" }}
+                      aria-label={`Eliminar ${s.nombre}`}
+                    >
+                      <Trash2 size={14} />
+                    </button>
                   </li>
                 ))}
               </ul>
@@ -481,6 +525,16 @@ export function SettingsClient({ consultorio, servicios: serviciosIniciales, hor
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={!!svcAEliminar}
+        title="¿Eliminar este servicio?"
+        description="Esta acción no se puede deshacer. Si el servicio tiene citas asociadas, no podrá eliminarse."
+        confirmLabel="Eliminar"
+        loading={eliminando}
+        onConfirm={confirmarEliminarServicio}
+        onCancel={() => setSvcAEliminar(null)}
+      />
     </div>
   )
 }

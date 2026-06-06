@@ -9,12 +9,22 @@ export const metadata: Metadata = {
   },
   description: "El sistema de gestión para tu consultorio médico",
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "AgendaMed",
+  },
+  icons: {
+    apple: "/icon-192.png",
+  },
 }
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
+  themeColor: "#0ea5e9",
 }
 
 export default function RootLayout({
