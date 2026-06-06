@@ -38,6 +38,8 @@ export async function updateSession(request: NextRequest) {
     "/registro",
     "/onboarding",
     "/auth/",
+    "/terminos",
+    "/privacidad",
   ].some((p) => url.pathname.startsWith(p))
 
   const isApiRoute = url.pathname.startsWith("/api/")

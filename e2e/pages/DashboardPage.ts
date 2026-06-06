@@ -12,8 +12,8 @@ export class DashboardPage {
     // .first() evita strict mode cuando el texto aparece en múltiples elementos
     await expect(this.page.getByText("Citas hoy").first()).toBeVisible()
     await expect(this.page.getByText("Pacientes activos").first()).toBeVisible()
-    await expect(this.page.getByText("Recetas este mes").first()).toBeVisible()
-    await expect(this.page.getByText("Citas próximas").first()).toBeVisible()
+    await expect(this.page.getByText("Ingresos del mes").first()).toBeVisible()
+    await expect(this.page.getByText("Tasa de asistencia").first()).toBeVisible()
   }
 
   async clickNuevaCita() {
