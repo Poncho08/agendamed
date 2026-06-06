@@ -34,9 +34,16 @@ export default async function PanelLayout({
     redirect("/planes?expired=1")
   }
 
+  // Contar pacientes activos para la barra del plan en el sidebar
+  const { count: pacientesCount } = await supabase
+    .from("pacientes")
+    .select("id", { count: "exact", head: true })
+    .eq("consultorio_id", consultorio.id)
+    .is("eliminado_en", null)
+
   return (
     <div className="app-shell">
-      <Sidebar consultorio={consultorio} />
+      <Sidebar consultorio={consultorio} pacientesCount={pacientesCount ?? 0} />
       <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
         <Topbar medicoNombre={consultorio.medico_nombre} />
         <main className="main-content">

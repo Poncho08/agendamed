@@ -40,9 +40,10 @@ const NAV = [
 
 interface SidebarProps {
   consultorio: Consultorio
+  pacientesCount?: number
 }
 
-export function Sidebar({ consultorio }: SidebarProps) {
+export function Sidebar({ consultorio, pacientesCount = 0 }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
@@ -50,7 +51,7 @@ export function Sidebar({ consultorio }: SidebarProps) {
     pathname.startsWith("/panel/agenda") || pathname.startsWith("/panel/citas")
   )
 
-  const pacientes = (consultorio as unknown as { _count?: { pacientes: number } })._count?.pacientes ?? 0
+  const pacientes = pacientesCount
   const maxPac = consultorio.max_pacientes
   const fillPct = Math.min(100, (pacientes / maxPac) * 100)
 
