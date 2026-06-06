@@ -41,10 +41,10 @@ test.describe("Recetas", () => {
     const inputDx = page.locator('input[placeholder*="J00"]').or(
       page.locator('input[placeholder*="diabetes"]')
     ).first()
-    await expect(inputDx).toBeVisible({ timeout: 5_000 })
+    await expect(inputDx).toBeVisible({ timeout: 10_000 })
     await inputDx.fill("diabetes")
     const sugerencia = page.locator("ul li button").filter({ hasText: /E11/ }).first()
-    await expect(sugerencia).toBeVisible({ timeout: 5_000 })
+    await expect(sugerencia).toBeVisible({ timeout: 10_000 })
     await sugerencia.click()
     await expect(inputDx).toHaveValue(/E11/)
   })
@@ -57,7 +57,7 @@ test.describe("Recetas", () => {
     await expect(botonesAccion.first()).toBeVisible({ timeout: 5_000 })
     await botonesAccion.first().click()
     const toast = await expectToast(page)
-    await expect(toast).toBeVisible({ timeout: 5_000 })
+    await expect(toast).toBeVisible({ timeout: 10_000 })
   })
 
   test("campo cédula profesional existe en configuración", async ({ page }) => {

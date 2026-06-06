@@ -85,13 +85,13 @@ test.describe("Autenticación", () => {
     await expect(page).toHaveURL(/\/login/)
   })
 
-  test.skip("página /auth/reset-password existe y carga", async ({ page }) => {
-    // Skip hasta hacer deploy — la página existe en código pero no en producción
+  test("página /auth/reset-password existe y carga", async ({ page }) => {
     await page.goto("/auth/reset-password")
+    await page.waitForLoadState("networkidle")
     // Señal 1: carga sin error 404
     await expect(page).not.toHaveTitle(/404|not found/i)
     // Señal 2: hay un input de contraseña visible
-    await expect(page.locator('input[type="password"]').first()).toBeVisible()
+    await expect(page.locator('input[type="password"]').first()).toBeVisible({ timeout: 10_000 })
   })
 
 })

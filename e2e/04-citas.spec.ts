@@ -40,17 +40,16 @@ test.describe("Citas — Panel del médico", () => {
 
   test("mini calendario navega al mes siguiente", async ({ page }) => {
     await page.goto("/panel/citas/nueva")
-    const mesActual = await page.locator(".card span").filter({
+    await page.waitForLoadState("networkidle")
+    const mesLabel = page.locator(".card span").filter({
       hasText: /enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre/i,
-    }).first().textContent()
+    }).first()
+    const mesActual = (await mesLabel.textContent()) ?? ""
 
     await page.locator("button.iconbtn").last().click()
 
-    const mesSiguiente = await page.locator(".card span").filter({
-      hasText: /enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre/i,
-    }).first().textContent()
-
-    expect(mesActual).not.toBe(mesSiguiente)
+    // Auto-retry hasta que el label de mes cambie (evita leer antes del re-render)
+    await expect(mesLabel).not.toHaveText(mesActual, { timeout: 10_000 })
   })
 
   test("detalle de cita existente carga si hay citas", async ({ page }) => {

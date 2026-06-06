@@ -46,10 +46,11 @@ test.describe("Pacientes", () => {
 
   test("perfil de paciente existente carga si hay pacientes", async ({ page }) => {
     await page.goto("/panel/pacientes")
+    await page.waitForLoadState("networkidle")
     const primerLink = page.locator("table tbody tr a").first()
     if ((await primerLink.count()) === 0) return
     await primerLink.click()
-    await expect(page).toHaveURL(/\/pacientes\/[a-z0-9-]+$/)
+    await expect(page).toHaveURL(/\/pacientes\/[a-z0-9-]+$/, { timeout: 10_000 })
     await expect(page.locator("main")).toBeVisible()
   })
 
